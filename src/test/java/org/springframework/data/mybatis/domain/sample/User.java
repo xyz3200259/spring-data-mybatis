@@ -31,8 +31,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-import org.springframework.data.mybatis.annotations.Condition;
-
 /**
  * 
  * @author 7cat
@@ -58,7 +56,6 @@ public class User {
 
 	private Date createdAt;
 
-	@Condition
 	private String emailAddress;
 
 	private String managerId;

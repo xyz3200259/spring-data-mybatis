@@ -23,12 +23,51 @@
 
 package org.springframework.data.mybatis.repository.domain;
 
-
 /**
  * 
  * @author 7cat
  * @since 1.0
  */
-public class Condition {
+public class ExampleInfo {
 
+	private Object value;
+
+	private String matcher;
+
+	private boolean ignoreCase;
+	
+	private boolean includeNull;
+
+	public Object getValue() {
+		return value;
+	}
+
+	public void setValue(Object value) {
+		this.value = value;
+	}
+
+	public String getMatcher() {
+		return matcher;
+	}
+
+	public void setMatcher(String matcher) {
+		this.matcher = matcher;
+	}
+
+	public boolean isIgnoreCase() {
+		return ignoreCase;
+	}
+
+	public void setIgnoreCase(boolean ignoreCase) {
+		this.ignoreCase = ignoreCase;
+	}
+	
+	public boolean isIncludeNull() {
+		return includeNull;
+	}
+	
+	public void setIncludeNull(boolean includeNull) {
+		this.includeNull = includeNull;
+	}
+	
 }

@@ -31,6 +31,8 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.SimpleTypeConverter;
 import org.springframework.beans.TypeConverter;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.domain.ExampleMatcher.StringMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -39,6 +41,9 @@ import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mybatis.id.IdentityGenerator;
 import org.springframework.data.mybatis.id.IdentityGeneratorFactory;
 import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
+import org.springframework.data.mybatis.repository.domain.ExampleInfo;
+import org.springframework.data.support.ExampleMatcherAccessor;
+import org.springframework.data.util.DirectFieldAccessFallbackBeanWrapper;
 import org.springframework.data.util.ReflectionUtils;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.Assert;
@@ -196,7 +201,7 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 
 	@Override
 	public List<T> findAll() {
-		return findAll((T) null);
+		return findAll((Sort) null);
 	}
 
 	@Override
@@ -230,32 +235,42 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 
 	@Override
 	public <S extends T> List<S> findAll(Example<S> example) {
-		return null;
+		Assert.notNull(example, "Example can not be null!");
+		Map<String, Object> params = new HashMap<>();
+		params.put("_example", buildExample(example));
+		return selectList("_findAll", params);
 	}
 
 	@Override
 	public <S extends T> List<S> findAll(Example<S> example, Sort sort) {
-		return null;
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("_sorts", sort);
+		params.put("_example", buildExample(example));
+		return selectList("_findAll", params);
 	}
 
 	@Override
 	public <S extends T> Optional<S> findOne(Example<S> example) {
-		return null;
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("_example", buildExample(example));
+		return Optional.of(selectOne("_findAll", params));
 	}
 
 	@Override
 	public <S extends T> Page<S> findAll(Example<S> example, Pageable pageable) {
-		return null;
+		return findByPager(pageable, "_findByPager", "_countByExample", buildExample(example));
 	}
 
 	@Override
 	public <S extends T> long count(Example<S> example) {
-		return 0;
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("_example", buildExample(example));
+		return selectOne("_countByExample", params);
 	}
 
 	@Override
 	public <S extends T> boolean exists(Example<S> example) {
-		return false;
+		return count(example)!=0;
 	}
 
 	@Override
@@ -263,61 +278,7 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 		if (null == pageable) {
 			return new PageImpl<T>(findAll());
 		}
-		return findAll(pageable, null);
-	}
-
-	@Override
-	public <X extends T> T findOne(X condition, String... columns) {
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("_condition", condition);
-		if (null != columns) {
-			params.put("_specifiedFields", columns);
-		}
-		return selectOne("_findAll", params);
-	}
-
-	@Override
-	public <X extends T> List<T> findAll(X condition, String... columns) {
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("_condition", condition);
-		if (null != columns) {
-			params.put("_specifiedFields", columns);
-		}
-		return selectList("_findAll", params);
-	}
-
-	@Override
-	public <X extends T> List<T> findAll(Sort sort, X condition, String... columns) {
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("_condition", condition);
-		params.put("_sorts", sort);
-		if (null != columns) {
-			params.put("_specifiedFields", columns);
-		}
-		return selectList("_findAll", params);
-	}
-
-	@Override
-	public <X extends T> Page<T> findAll(Pageable pageable, X condition, String... columns) {
-		Map<String, Object> otherParam = new HashMap<String, Object>();
-		if (null != columns) {
-			otherParam.put("_specifiedFields", columns);
-		}
-		return findByPager(pageable, "_findByPager", "_countByCondition", condition, otherParam);
-	}
-
-	@Override
-	public <X extends T> Long countAll(X condition) {
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("_condition", condition);
-		return selectOne("_countByCondition", params);
-	}
-
-	@Override
-	public <X extends T> int deleteByCondition(X condition) {
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("_condition", condition);
-		return super.delete("_deleteByCondition", params);
+		return findByPager(pageable, "_findByPager", "_countByExample", null);
 	}
 
 	@Override
@@ -325,4 +286,64 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 		//TODO improve delete in batch
 		deleteAll(entities);
 	}
+
+	private <S extends T> Map<String, ExampleInfo> buildExample(Example<S> example) {
+		Map<String, ExampleInfo> theExample = new HashMap<>();
+		ExampleMatcher matcher = example.getMatcher();
+		ExampleMatcherAccessor accesser = new ExampleMatcherAccessor(matcher);
+		DirectFieldAccessFallbackBeanWrapper beanWrapper = new DirectFieldAccessFallbackBeanWrapper(example.getProbe());
+		entityInformation.getPersistentEntity().doWithProperties((PropertyHandler<MybatisPersistentProperty>) (p) -> {
+			if (!p.isIdProperty()) {
+				ExampleInfo info = new ExampleInfo();
+				Object value = beanWrapper.getPropertyValue(p.getName());
+
+				if(accesser.isIgnoredPath(p.getName())) {
+					return;
+				}
+				
+				if (null == value) {
+					if (matcher.getNullHandler().equals(ExampleMatcher.NullHandler.INCLUDE)) {
+						info.setIncludeNull(true);
+						theExample.put(p.getName(), info);
+					}
+					return;
+				}
+				if (p.getActualType().equals(String.class)) {
+					if (accesser.isIgnoreCaseForPath(p.getName())) {
+						info.setIgnoreCase(true);
+						info.setValue(((String) value).toUpperCase());
+					}else {
+						info.setValue(value);
+					}
+					switch (accesser.getStringMatcherForPath(p.getName())) {
+						case DEFAULT:
+						case EXACT:
+							info.setMatcher(StringMatcher.EXACT.toString());
+							break;
+						case CONTAINING:
+							info.setMatcher(StringMatcher.CONTAINING.toString());
+							break;
+						case STARTING:
+							info.setMatcher(StringMatcher.STARTING.toString());
+							break;
+						case ENDING:
+							info.setMatcher(StringMatcher.ENDING.toString());
+							break;
+						default:
+							throw new IllegalArgumentException(
+									"Unsupported StringMatcher " + accesser.getStringMatcherForPath(p.getName()));
+					}
+
+				}
+				else {
+					info.setMatcher(StringMatcher.EXACT.toString());
+					info.setValue(value);
+				}
+
+				theExample.put(p.getName(), info);
+			}
+		});
+		return theExample;
+	}
+
 }

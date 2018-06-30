@@ -18,16 +18,14 @@
 
 package org.springframework.data.mybatis.repository.support;
 
+import java.io.Serializable;
+import java.util.List;
+
 import org.springframework.data.domain.Example;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.QueryByExampleExecutor;
-
-import java.io.Serializable;
-import java.util.List;
 
 /**
  * Mybatis specific extension of {@link org.springframework.data.repository.Repository}.
@@ -64,17 +62,5 @@ public interface MybatisRepository<T, ID extends Serializable>
 	@Override
 	<S extends T> List<S> findAll(Example<S> example, Sort sort);
 
-	<X extends T> T findOne(X condition, String... columns);
-
-	<X extends T> List<T> findAll(X condition, String... columns);
-
-	<X extends T> List<T> findAll(Sort sort, X condition, String... columns);
-
-	<X extends T> Page<T> findAll(Pageable pageable, X condition, String... columns);
-
-	<X extends T> Long countAll(X condition);
-
 	void deleteInBatch(Iterable<T> entities);
-
-	<X extends T> int deleteByCondition(X condition);
 }

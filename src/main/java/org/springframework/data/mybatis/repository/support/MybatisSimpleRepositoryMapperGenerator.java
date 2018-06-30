@@ -18,31 +18,25 @@
 
 package org.springframework.data.mybatis.repository.support;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;
 import org.apache.ibatis.session.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.mapping.*;
 import org.springframework.data.mapping.MappingException;
-import org.springframework.data.mybatis.annotations.Condition;
-import org.springframework.data.mybatis.annotations.Conditions;
+import org.springframework.data.mapping.PersistentProperty;
+import org.springframework.data.mapping.PreferredConstructor;
+import org.springframework.data.mapping.PropertyHandler;
+import org.springframework.data.mapping.SimplePropertyHandler;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntityImpl;
 import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
 import org.springframework.data.mybatis.repository.dialect.Dialect;
-import org.springframework.data.repository.query.parser.Part.IgnoreCaseType;
-import org.springframework.data.repository.query.parser.Part.Type;
-import org.springframework.util.StringUtils;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 
 /**
  * generate basic mapper for simple repository automatic.
@@ -50,621 +44,584 @@ import java.util.Set;
  * @author Jarvis Song
  */
 public class MybatisSimpleRepositoryMapperGenerator {
-    private transient static final Logger logger = LoggerFactory.getLogger(MybatisSimpleRepositoryMapperGenerator.class);
-    private static final String MAPPER_BEGIN = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-            "<!DOCTYPE mapper PUBLIC \"-//mybatis.org//DTD Mapper 3.0//EN\" \"http://mybatis.org/dtd/mybatis-3-mapper.dtd\">";
-    private static final String MAPPER_END = "</mapper>";
 
-    private final Configuration configuration;
-    private final Dialect dialect;
-    private final MybatisMappingContext context;
-    private final Class<?> domainClass;
-    private final MybatisPersistentEntity<?> persistentEntity;
-    private final MybatisMapperGenerator generator;
+	private transient static final Logger logger = LoggerFactory.getLogger(
+			MybatisSimpleRepositoryMapperGenerator.class);
 
-    public MybatisSimpleRepositoryMapperGenerator(Configuration configuration, Dialect dialect, MybatisMappingContext context, Class<?> domainClass) {
-        this.configuration = configuration;
-        this.dialect = dialect;
-        this.context = context;
-        this.domainClass = domainClass;
-        this.persistentEntity = context.getPersistentEntity(domainClass);
+	private static final String MAPPER_BEGIN = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+			+ "<!DOCTYPE mapper PUBLIC \"-//mybatis.org//DTD Mapper 3.0//EN\" \"http://mybatis.org/dtd/mybatis-3-mapper.dtd\">";
 
-        this.generator = new MybatisMapperGenerator(dialect, persistentEntity);
-    }
+	private static final String MAPPER_END = "</mapper>";
 
+	private final Configuration configuration;
 
-    public void generate() {
-        if (null == persistentEntity) {
-            logger.warn("Could not find persistent entity for domain: " + domainClass + " from mapping context.");
-            return;
-        }
-        String xml;
-        String namespace = domainClass.getName();
-        try {
-            xml = render();
-        } catch (IOException e) {
-            throw new MappingException("create auto mapping error for " + namespace, e);
-        }
-        if (logger.isDebugEnabled()) {
-            logger.debug("\n******************* Auto Generate MyBatis Mapping XML (" + namespace + ") *******************\n" + xml);
-        }
-        InputStream inputStream = null;
-        try {
-            inputStream = new ByteArrayInputStream(xml.getBytes("UTF-8"));
-        } catch (UnsupportedEncodingException e) {
-            // ignore
-        }
-        String resource = namespace + "_auto_generate.xml";
-        try {
-            XMLMapperBuilder xmlMapperBuilder = new XMLMapperBuilder(inputStream, configuration, resource, configuration.getSqlFragments(), namespace);
-            xmlMapperBuilder.parse();
-        } catch (Exception e) {
-            throw new MappingException("create auto mapping error for " + namespace, e);
-        } finally {
-            try {
-                inputStream.close();
-            } catch (IOException e) {
-                logger.error(e.getMessage(), e);
-            }
-        }
-    }
+	private final Dialect dialect;
 
-    private String render() throws IOException {
+	private final MybatisMappingContext context;
 
-        StringBuilder builder = new StringBuilder();
-        builder.append(MAPPER_BEGIN);
+	private final Class<?> domainClass;
 
-        builder.append("<mapper namespace=\"" + domainClass.getName() + "\">");
+	private final MybatisPersistentEntity<?> persistentEntity;
 
-        if (!isFragmentExist("TABLE_NAME")) {
-            builder.append("<sql id=\"TABLE_NAME\">" + dialect.wrapTableName(persistentEntity.getTableName()) + "</sql>");
-        }
-     
-        if (!isResultMapExist("ResultMap")) {
-            buildResultMap(builder);
-        }
-        if (!isStatementExist("_insert")) {
-            buildInsertSQL(builder);
-        }
-        if (!isStatementExist("_update")) {
-            buildUpdateSQL(builder, "_update", false);
-        }
-        if (!isStatementExist("_updateIgnoreNull")) {
-            buildUpdateSQL(builder, "_updateIgnoreNull", true);
-        }
-        if (!isStatementExist("_getById")) {
-            buildGetById(builder);
-        }
-        if (!isStatementExist("_findAll")) {
-            buildFindAll(builder);
-        }
-       
-        if (!isStatementExist("_count")) {
-            buildCount(builder);
-        }
-        if (!isStatementExist("_deleteById")) {
-            buildDeleteById(builder);
-        }
-        if (!isStatementExist("_deleteAll")) {
-            buildDeleteAll(builder);
-        }
-        if (!isStatementExist("_findByPager")) {
-            buildFindByPager(builder);
-        }
-        if (!isStatementExist("_countByCondition")) {
-            buildCountByCondition(builder);
-        }
-        if (!isStatementExist("_deleteByCondition")) {
-            buildDeleteByCondition(builder);
-        }
-        builder.append(MAPPER_END);
-        String result = builder.toString();
+	private final MybatisMapperGenerator generator;
+	
+	private final ExampleGenerator exampleGenerator;
 
+	public MybatisSimpleRepositoryMapperGenerator(Configuration configuration, Dialect dialect,
+			MybatisMappingContext context, Class<?> domainClass) {
+		this.configuration = configuration;
+		this.dialect = dialect;
+		this.context = context;
+		this.domainClass = domainClass;
+		this.persistentEntity = context.getPersistentEntity(domainClass);
+		this.generator = new MybatisMapperGenerator(dialect, persistentEntity);
+		this.exampleGenerator = new ExampleGenerator(this.generator,this.dialect,this.persistentEntity);
+	}
 
-        return result;
-    }
+	public void generate() {
+		if (null == persistentEntity) {
+			logger.warn("Could not find persistent entity for domain: " + domainClass + " from mapping context.");
+			return;
+		}
+		String xml;
+		String namespace = domainClass.getName();
+		try {
+			xml = render();
+		}
+		catch (IOException e) {
+			throw new MappingException("create auto mapping error for " + namespace, e);
+		}
+		if (logger.isDebugEnabled()) {
+			logger.debug("\n******************* Auto Generate MyBatis Mapping XML (" + namespace
+					+ ") *******************\n" + xml);
+		}
+		InputStream inputStream = null;
+		try {
+			inputStream = new ByteArrayInputStream(xml.getBytes("UTF-8"));
+		}
+		catch (UnsupportedEncodingException e) {
+			// ignore
+		}
+		String resource = namespace + "_auto_generate.xml";
+		try {
+			XMLMapperBuilder xmlMapperBuilder = new XMLMapperBuilder(inputStream, configuration, resource,
+					configuration.getSqlFragments(), namespace);
+			xmlMapperBuilder.parse();
+		}
+		catch (Exception e) {
+			throw new MappingException("create auto mapping error for " + namespace, e);
+		}
+		finally {
+			try {
+				inputStream.close();
+			}
+			catch (IOException e) {
+				logger.error(e.getMessage(), e);
+			}
+		}
+	}
 
+	private String render() throws IOException {
 
-    private void buildUpdateSQL(final StringBuilder builder, String statementName, final boolean ignoreNull) {
-        if (!persistentEntity.hasIdProperty()) {
-            return;
-        }
-        builder.append("<update id=\"" + statementName + "\" parameterType=\"" + domainClass.getName() + "\" lang=\"XML\">");
-        builder.append("update ").append(dialect.wrapTableName(persistentEntity.getTableName()));
-        builder.append("<set>");
+		StringBuilder builder = new StringBuilder();
+		builder.append(MAPPER_BEGIN);
 
-        persistentEntity.doWithProperties(new SimplePropertyHandler() {
-            @Override
-            public void doWithPersistentProperty(PersistentProperty<?> pp) {
-                MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
-                if (property.isIdProperty()) {
-                    return;
-                }
+		builder.append("<mapper namespace=\"" + domainClass.getName() + "\">");
 
-                if (property.isVersionProperty()) {
-                    builder.append(dialect.wrapColumnName(property.getColumnName())).append("=").append(dialect.wrapColumnName(property.getColumnName())).append("+1,");
-                    return;
-                }
-                if (ignoreNull) {
-                    builder.append("<if test=\"" + property.getName() + " != null\">");
-                }
-                builder.append(dialect.wrapColumnName(property.getColumnName())).append("=#{").append(property.getName())
-                        .append(",jdbcType=").append(property.getJdbcType())
-                        .append(null != property.getSpecifiedTypeHandler() ? (",typeHandler=" + property.getSpecifiedTypeHandler().getName()) : "")
-                        .append("},");
-                if (ignoreNull) {
-                    builder.append("</if>");
-                }
-            }
-        });
-        if (builder.charAt(builder.length() - 1) == ',') {
-            builder.deleteCharAt(builder.length() - 1);
-        }
-        builder.append("</set>");
-        builder.append("<trim prefix=\"where\" prefixOverrides=\"and |or \">");
+		if (!isFragmentExist("TABLE_NAME")) {
+			builder.append(
+					"<sql id=\"TABLE_NAME\">" + dialect.wrapTableName(persistentEntity.getTableName()) + "</sql>");
+		}
+		
+		if (!isFragmentExist("_EXAMPLE")) {
+			builder.append("<sql id=\"_EXAMPLE\">" + buildExample() + "</sql>");
+		}
 
-        final MybatisPersistentProperty idProperty = persistentEntity.getIdProperty();
-        if (idProperty.isCompositeId()) {
-            MybatisPersistentEntityImpl<?> idEntity = context.getPersistentEntity(idProperty.getActualType());
-            if (null != idEntity) {
-                idEntity.doWithProperties(new SimplePropertyHandler() {
-                    @Override
-                    public void doWithPersistentProperty(PersistentProperty<?> pp) {
-                        MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
-                        builder.append(" and ").append(dialect.wrapColumnName(property.getColumnName())).append("=").append("#{").append(idProperty.getName()).append(".").append(property.getName()).append("}");
-                    }
-                });
-            }
-        } else {
-            builder.append(" and ").append(dialect.wrapColumnName(idProperty.getColumnName())).append("=").append("#{").append(idProperty.getName()).append("}");
-        }
+		if (!isResultMapExist("ResultMap")) {
+			buildResultMap(builder);
+		}
+		if (!isStatementExist("_insert")) {
+			buildInsertSQL(builder);
+		}
+		if (!isStatementExist("_update")) {
+			buildUpdateSQL(builder, "_update", false);
+		}
+		if (!isStatementExist("_updateIgnoreNull")) {
+			buildUpdateSQL(builder, "_updateIgnoreNull", true);
+		}
+		if (!isStatementExist("_getById")) {
+			buildGetById(builder);
+		}
+		if (!isStatementExist("_findAll")) {
+			buildFindAll(builder);
+		}
 
-        MybatisPersistentProperty versionProperty = persistentEntity.getVersionProperty();
-        if (null != versionProperty) {
-            builder.append("and ").append(dialect.wrapColumnName(versionProperty.getColumnName())).append("=").append("#{").append(versionProperty.getName()).append("}");
-        }
+		if (!isStatementExist("_count")) {
+			buildCount(builder);
+		}
+		if (!isStatementExist("_deleteById")) {
+			buildDeleteById(builder);
+		}
+		if (!isStatementExist("_deleteAll")) {
+			buildDeleteAll(builder);
+		}
+		if (!isStatementExist("_findByPager")) {
+			buildFindByPager(builder);
+		}
+		if (!isStatementExist("_countByExample")) {
+			buildCountByExample(builder);
+		}
+		if (!isStatementExist("_deleteByExample")) {
+			buildDeleteByExample(builder);
+		}
+		builder.append(MAPPER_END);
+		String result = builder.toString();
 
-        builder.append("</trim>");
-        builder.append("</update>");
-    }
+		return result;
+	}
 
+	private void buildUpdateSQL(final StringBuilder builder, String statementName, final boolean ignoreNull) {
+		if (!persistentEntity.hasIdProperty()) {
+			return;
+		}
+		builder.append(
+				"<update id=\"" + statementName + "\" parameterType=\"" + domainClass.getName() + "\" lang=\"XML\">");
+		builder.append("update ").append(dialect.wrapTableName(persistentEntity.getTableName()));
+		builder.append("<set>");
 
-    private void buildDeleteByCondition(StringBuilder builder) {
-        builder.append("<delete id=\"_deleteByCondition\" lang=\"XML\">");
-        builder.append("delete");
-        if (dialect.supportsDeleteAlias()) {
-            builder.append(" ").append(quota(persistentEntity.getEntityName()));
-        }
-        builder.append(" from ").append(generator.buildFrom());
+		persistentEntity.doWithProperties(new SimplePropertyHandler() {
 
-        builder.append("<if test=\"_condition != null\">");
-        builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
-        builder.append(buildCondition());
-        builder.append("</trim>");
-        builder.append("</if>");
-        builder.append("</delete>");
-    }
+			@Override
+			public void doWithPersistentProperty(PersistentProperty<?> pp) {
+				MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+				if (property.isIdProperty()) {
+					return;
+				}
 
-    private void buildGetById(final StringBuilder builder) {
-        builder.append("<select id=\"_getById\" parameterType=\"" + domainClass.getName() + "\" resultMap=\"ResultMap\" lang=\"XML\">");
-        builder.append("select ").append(generator.buildSelectColumns()).append(" from ").append(generator.buildFrom());
+				if (property.isVersionProperty()) {
+					builder.append(dialect.wrapColumnName(property.getColumnName())).append("=").append(
+							dialect.wrapColumnName(property.getColumnName())).append("+1,");
+					return;
+				}
+				if (ignoreNull) {
+					builder.append("<if test=\"" + property.getName() + " != null\">");
+				}
+				builder.append(dialect.wrapColumnName(property.getColumnName())).append("=#{").append(
+						property.getName()).append(",jdbcType=").append(property.getJdbcType()).append(
+								null != property.getSpecifiedTypeHandler()
+										? (",typeHandler=" + property.getSpecifiedTypeHandler().getName())
+										: "").append("},");
+				if (ignoreNull) {
+					builder.append("</if>");
+				}
+			}
+		});
+		if (builder.charAt(builder.length() - 1) == ',') {
+			builder.deleteCharAt(builder.length() - 1);
+		}
+		builder.append("</set>");
+		builder.append("<trim prefix=\"where\" prefixOverrides=\"and |or \">");
 
-        builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
-        buildByIdCaluse(builder);
-        builder.append("</trim>");
-        builder.append("</select>");
-    }
+		final MybatisPersistentProperty idProperty = persistentEntity.getIdProperty();
+		if (idProperty.isCompositeId()) {
+			MybatisPersistentEntityImpl<?> idEntity = context.getPersistentEntity(idProperty.getActualType());
+			if (null != idEntity) {
+				idEntity.doWithProperties(new SimplePropertyHandler() {
 
-    private void buildByIdCaluse(final StringBuilder builder) {
-        final MybatisPersistentProperty idProperty = persistentEntity.getIdProperty();
-        if (idProperty.isCompositeId()) {
-            MybatisPersistentEntityImpl<?> idEntity = context.getPersistentEntity(idProperty.getActualType());
-            if (null != idEntity) {
-                idEntity.doWithProperties(new SimplePropertyHandler() {
-                    @Override
-                    public void doWithPersistentProperty(PersistentProperty<?> pp) {
-                        MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
-                        builder.append(" and ").append(quota(persistentEntity.getEntityName())).append(".").append(dialect.wrapColumnName(property.getColumnName()))
-                                .append("=").append("#{" + idProperty.getName() + "." + property.getName() + "}");
-                    }
-                });
-            }
-        } else {
-            builder.append(" and ").append(quota(persistentEntity.getEntityName())).append(".").append(dialect.wrapColumnName(idProperty.getColumnName()))
-                    .append("=").append("#{" + idProperty.getName() + "}");
-        }
-    }
+					@Override
+					public void doWithPersistentProperty(PersistentProperty<?> pp) {
+						MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+						builder.append(" and ").append(dialect.wrapColumnName(property.getColumnName())).append(
+								"=").append("#{").append(idProperty.getName()).append(".").append(
+										property.getName()).append("}");
+					}
+				});
+			}
+		}
+		else {
+			builder.append(" and ").append(dialect.wrapColumnName(idProperty.getColumnName())).append("=").append(
+					"#{").append(idProperty.getName()).append("}");
+		}
 
-    private void buildFindByPager(StringBuilder builder) {
-        builder.append("<select id=\"_findByPager\" resultMap=\"ResultMap\" lang=\"XML\">");
-        StringBuilder condition = new StringBuilder();
-        condition.append("<if test=\"_condition != null\">");
-        condition.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
-        condition.append(buildCondition());
-        condition.append("</trim>");
-        condition.append("</if>");
-        builder.append(dialect.getLimitHandler().processSql(true, generator.buildSelectColumns(), " from " + generator.buildFrom(), condition.toString(), generator.buildSorts(null)));
-        builder.append("</select>");
-    }
+		MybatisPersistentProperty versionProperty = persistentEntity.getVersionProperty();
+		if (null != versionProperty) {
+			builder.append("and ").append(dialect.wrapColumnName(versionProperty.getColumnName())).append("=").append(
+					"#{").append(versionProperty.getName()).append("}");
+		}
 
-    private void buildDeleteAll(StringBuilder builder) {
-        builder.append("<delete id=\"_deleteAll\">truncate table " + dialect.wrapTableName(persistentEntity.getTableName()) + " </delete>");
-    }
+		builder.append("</trim>");
+		builder.append("</update>");
+	}
 
-    private void buildDeleteById(final StringBuilder builder) {
-        if (!persistentEntity.hasIdProperty()) {
-            return;
-        }
-        builder.append("<delete id=\"_deleteById\" parameterType=\"" + domainClass.getName() + "\" lang=\"XML\">");
+	private void buildDeleteByExample(StringBuilder builder) {
+		builder.append("<delete id=\"_deleteByExample\" lang=\"XML\">");
+		builder.append("delete");
+		if (dialect.supportsDeleteAlias()) {
+			builder.append(" ").append(quota(persistentEntity.getEntityName()));
+		}
+		builder.append(" from ").append(generator.buildFrom());
 
-        builder.append("delete");
-        if (dialect.supportsDeleteAlias()) {
-            builder.append(" ").append(quota(persistentEntity.getEntityName()));
-        }
-        builder.append(" from ").append(generator.buildFrom());
+		builder.append("<if test=\"_example != null\">");
+		builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
+		builder.append("<include refid=\"_EXAMPLE\" />");
+		builder.append("</trim>");
+		builder.append("</if>");
+		builder.append("</delete>");
+	}
 
-        builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
+	private void buildGetById(final StringBuilder builder) {
+		builder.append("<select id=\"_getById\" parameterType=\"" + domainClass.getName()
+				+ "\" resultMap=\"ResultMap\" lang=\"XML\">");
+		builder.append("select ").append(generator.buildSelectColumns()).append(" from ").append(generator.buildFrom());
 
+		builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
+		buildByIdCaluse(builder);
+		builder.append("</trim>");
+		builder.append("</select>");
+	}
 
-        final MybatisPersistentProperty idProperty = persistentEntity.getIdProperty();
-        if (idProperty.isCompositeId()) {
-            MybatisPersistentEntityImpl<?> idEntity = context.getPersistentEntity(idProperty.getActualType());
-            if (null != idEntity) {
-                idEntity.doWithProperties(new PropertyHandler<MybatisPersistentProperty>() {
-                    @Override
-                    public void doWithPersistentProperty(MybatisPersistentProperty property) {
-                        builder.append("and ").append(dialect.wrapColumnName(property.getColumnName())).append("=#{" + idProperty.getName() + "." + property.getName() + "}");
+	private void buildByIdCaluse(final StringBuilder builder) {
+		final MybatisPersistentProperty idProperty = persistentEntity.getIdProperty();
+		if (idProperty.isCompositeId()) {
+			MybatisPersistentEntityImpl<?> idEntity = context.getPersistentEntity(idProperty.getActualType());
+			if (null != idEntity) {
+				idEntity.doWithProperties(new SimplePropertyHandler() {
 
-                    }
-                });
-            }
-        } else {
-            builder.append(" and ").append(dialect.wrapColumnName(idProperty.getColumnName())).append("=#{" + idProperty.getName() + "}");
-        }
+					@Override
+					public void doWithPersistentProperty(PersistentProperty<?> pp) {
+						MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+						builder.append(" and ").append(quota(persistentEntity.getEntityName())).append(".").append(
+								dialect.wrapColumnName(property.getColumnName())).append("=").append(
+										"#{" + idProperty.getName() + "." + property.getName() + "}");
+					}
+				});
+			}
+		}
+		else {
+			builder.append(" and ").append(quota(persistentEntity.getEntityName())).append(".").append(
+					dialect.wrapColumnName(idProperty.getColumnName())).append("=").append(
+							"#{" + idProperty.getName() + "}");
+		}
+	}
 
-        builder.append("</trim>");
-        builder.append("</delete>");
-    }
+	private void buildFindByPager(StringBuilder builder) {
+		builder.append("<select id=\"_findByPager\" resultMap=\"ResultMap\" lang=\"XML\">");
+		StringBuilder example = new StringBuilder();
+		example.append("<if test=\"_example != null\">");
+		example.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
+		example.append("<include refid=\"_EXAMPLE\" />");
+		example.append("</trim>");
+		example.append("</if>");
+		builder.append(dialect.getLimitHandler().processSql(true, generator.buildSelectColumns(),
+				" from " + generator.buildFrom(), example.toString(), generator.buildSorts(null)));
+		builder.append("</select>");
+	}
 
-    private void buildCount(StringBuilder builder) {
-        builder.append("<select id=\"_count\" resultType=\"long\" lang=\"XML\">");
-        builder.append("select count(*) from ");
-        builder.append(generator.buildFrom());
-        builder.append("</select>");
+	private void buildDeleteAll(StringBuilder builder) {
+		builder.append("<delete id=\"_deleteAll\">truncate table "
+				+ dialect.wrapTableName(persistentEntity.getTableName()) + " </delete>");
+	}
 
-    }
+	private void buildDeleteById(final StringBuilder builder) {
+		if (!persistentEntity.hasIdProperty()) {
+			return;
+		}
+		builder.append("<delete id=\"_deleteById\" parameterType=\"" + domainClass.getName() + "\" lang=\"XML\">");
 
+		builder.append("delete");
+		if (dialect.supportsDeleteAlias()) {
+			builder.append(" ").append(quota(persistentEntity.getEntityName()));
+		}
+		builder.append(" from ").append(generator.buildFrom());
 
-    private void buildCountByCondition(StringBuilder builder) {
-        builder.append("<select id=\"_countByCondition\" resultType=\"long\" lang=\"XML\">");
+		builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
 
-        builder.append("select count(*) from ").append(generator.buildFrom());
+		final MybatisPersistentProperty idProperty = persistentEntity.getIdProperty();
+		if (idProperty.isCompositeId()) {
+			MybatisPersistentEntityImpl<?> idEntity = context.getPersistentEntity(idProperty.getActualType());
+			if (null != idEntity) {
+				idEntity.doWithProperties(new PropertyHandler<MybatisPersistentProperty>() {
 
-        builder.append("<if test=\"_condition != null\">");
-        builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
-        builder.append(buildCondition());
-        builder.append("</trim>");
-        builder.append("</if>");
+					@Override
+					public void doWithPersistentProperty(MybatisPersistentProperty property) {
+						builder.append("and ").append(dialect.wrapColumnName(property.getColumnName())).append(
+								"=#{" + idProperty.getName() + "." + property.getName() + "}");
 
-        builder.append("</select>");
-    }
+					}
+				});
+			}
+		}
+		else {
+			builder.append(" and ").append(dialect.wrapColumnName(idProperty.getColumnName())).append(
+					"=#{" + idProperty.getName() + "}");
+		}
 
-    private String buildCondition() {
+		builder.append("</trim>");
+		builder.append("</delete>");
+	}
+
+	private void buildCount(StringBuilder builder) {
+		builder.append("<select id=\"_count\" resultType=\"long\" lang=\"XML\">");
+		builder.append("select count(*) from ");
+		builder.append(generator.buildFrom());
+		builder.append("</select>");
+
+	}
+
+	private void buildCountByExample(StringBuilder builder) {
+		builder.append("<select id=\"_countByExample\" resultType=\"long\" lang=\"XML\">");
+
+		builder.append("select count(*) from ").append(generator.buildFrom());
+
+		builder.append("<if test=\"_example != null\">");
+		builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
+		builder.append("<include refid=\"_EXAMPLE\" />");
+		builder.append("</trim>");
+		builder.append("</if>");
+
+		builder.append("</select>");
+	}
+
+	private String buildExample() {
         final StringBuilder builder = new StringBuilder();
         persistentEntity.doWithProperties(new PropertyHandler<MybatisPersistentProperty>() {
             @Override
-            public void doWithPersistentProperty(MybatisPersistentProperty property) {
-                Set<Condition> conditions = new HashSet<Condition>();
-                Condition cond = property.findAnnotation(Condition.class);
-                if (null != cond) {
-                    conditions.add(cond);
-                }
-                Conditions conds = property.findAnnotation(Conditions.class);
-                if (null != conds && null != conds.value() && conds.value().length > 0) {
-                    conditions.addAll(Arrays.asList(conds.value()));
-                }
-                if (conditions.isEmpty()) {
-                    return;
-                }
-                for (Condition condition : conditions) {
-                    String[] condProperties = condition.properties();
-                    String condColumn = condition.column();
-                    String condAlias = condition.alias();
-                    Type condType = condition.type();
-                    IgnoreCaseType ignoreCaseType = condition.ignoreCaseType();
-                    if (null == condProperties || condProperties.length == 0) {
-                        condProperties = new String[]{property.getName()};
-                    }
-                    if (StringUtils.isEmpty(condColumn)) {
-                        condColumn = dialect.wrapColumnName(property.getColumnName());
-                    }
-                    if (StringUtils.isEmpty(condAlias)) {
-                        condAlias = persistentEntity.getEntityName();
-                    }
-                    builder.append("<if test=\"_condition != null");
-
-                    for (int i = 0; i < condProperties.length; i++) {
-                        String condProperty = condProperties[i];
-                        String[] split = condProperty.split("\\.");
-                        if (split.length > 1) {
-                            builder.append(" and _condition." + split[0] + " != null");
-                        }
-                        builder.append(" and _condition." + condProperty + " != null");
-                    }
-                    builder.append("\">");
-
-                    builder.append(" and ").append(quota(condAlias)).append(".").append(condColumn);
-                    builder.append(generator.buildConditionOperate(condType));
-                    for (int i = 0; i < condProperties.length; i++) {
-                        condProperties[i] = "_condition." + condProperties[i];
-                    }
-                    builder.append(generator.buildConditionCaluse(condType, ignoreCaseType, condProperties));
-                    builder.append("</if>");
-                }
-
+            public void doWithPersistentProperty(MybatisPersistentProperty property) { 
+            	if(!property.isIdProperty()) {
+            		builder.append(exampleGenerator.generate(property));	
+            	}
             }
         });
         return builder.toString();
 
     }
 
+	private void buildFindAll(StringBuilder builder) {
+		builder.append("<select id=\"_findAll\" resultMap=\"ResultMap\" lang=\"XML\">");
+		builder.append("select ").append(generator.buildSelectColumns()).append(" from ").append(generator.buildFrom());
 
-//    private void buildFindBasicAll(StringBuilder builder) {
-//        builder.append("<select id=\"_findBasicAll\" resultMap=\"ResultMap\" lang=\"XML\">");
-//
-//        builder.append("select ").append(generator.buildSelectColumns()).append(" from ").append(generator.buildFrom());
-//
-//
-//        builder.append("<if test=\"_condition != null\">");
-//        builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
-//        builder.append(buildCondition());
-//        builder.append("</trim>");
-//        builder.append("</if>");
-//
-//        if (persistentEntity.hasIdProperty()) {
-//            MybatisPersistentProperty idProperty = persistentEntity.getIdProperty();
-//            if (!idProperty.isCompositeId()) {
-//                builder.append("<if test=\"_ids != null\">");
-//
-//                builder.append(" where ").append(quota(persistentEntity.getEntityName())).append(".").append(dialect.wrapColumnName(idProperty.getColumnName())).append(" in ");
-//                builder.append("<foreach item=\"item\" index=\"index\" collection=\"_ids\" open=\"(\" separator=\",\" close=\")\">#{item}</foreach>");
-//
-//                builder.append("</if>");
-//            }
-//        }
-//        builder.append(generator.buildSorts(null));
-//
-//        builder.append("</select>");
-//    }
+		builder.append("<if test=\"_example != null\">");
+		builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
+		builder.append("<include refid=\"_EXAMPLE\" />");
+		builder.append("</trim>");
 
-    private void buildFindAll(StringBuilder builder) {
-        builder.append("<select id=\"_findAll\" resultMap=\"ResultMap\" lang=\"XML\">");
-        builder.append("select ").append(generator.buildSelectColumns()).append(" from ").append(generator.buildFrom());
+		builder.append("</if>");
 
-        builder.append("<if test=\"_condition != null\">");
-        builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
-        builder.append(buildCondition());
+		if (persistentEntity.hasIdProperty()) {
+			builder.append("<if test=\"_ids != null\">");
 
-        builder.append("</trim>");
-        builder.append("</if>");
+			MybatisPersistentProperty idProperty = persistentEntity.getIdProperty();
+			if (!idProperty.isCompositeId()) {
+				builder.append(" where ").append(quota(persistentEntity.getEntityName())).append(".").append(
+						dialect.wrapColumnName(idProperty.getColumnName())).append(" in ");
+				builder.append(
+						"<foreach item=\"item\" index=\"index\" collection=\"_ids\" open=\"(\" separator=\",\" close=\")\">#{item}</foreach>");
+			}
+			builder.append("</if>");
+		}
+		builder.append(generator.buildSorts(null));
 
-        if (persistentEntity.hasIdProperty()) {
-            builder.append("<if test=\"_ids != null\">");
+		builder.append("</select>");
+	}
 
-            MybatisPersistentProperty idProperty = persistentEntity.getIdProperty();
-            if (!idProperty.isCompositeId()) {
-                builder.append(" where ").append(quota(persistentEntity.getEntityName())).append(".").append(dialect.wrapColumnName(idProperty.getColumnName())).append(" in ");
-                builder.append("<foreach item=\"item\" index=\"index\" collection=\"_ids\" open=\"(\" separator=\",\" close=\")\">#{item}</foreach>");
-            }
-            builder.append("</if>");
-        }
-        builder.append(generator.buildSorts(null));
+	private void buildInsertSQL(final StringBuilder builder) {
+		builder.append("<insert id=\"_insert\" parameterType=\"" + domainClass.getName() + "\" lang=\"XML\">");
+		builder.append("<![CDATA[");
 
-        builder.append("</select>");
-    }
+		builder.append("insert into ").append(dialect.wrapTableName(persistentEntity.getTableName())).append("(");
 
+		persistentEntity.doWithProperties(new SimplePropertyHandler() {
 
-    private void buildInsertSQL(final StringBuilder builder) {
-        builder.append("<insert id=\"_insert\" parameterType=\"" + domainClass.getName() + "\" lang=\"XML\">");
-        builder.append("<![CDATA[");
+			@Override
+			public void doWithPersistentProperty(PersistentProperty<?> pp) {
+				MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+				builder.append(dialect.wrapColumnName(property.getColumnName())).append(",");
+			}
+		});
 
-        builder.append("insert into ").append(dialect.wrapTableName(persistentEntity.getTableName())).append("(");
+		if (builder.charAt(builder.length() - 1) == ',') {
+			builder.deleteCharAt(builder.length() - 1);
+		}
+		builder.append(") values(");
 
+		persistentEntity.doWithProperties(new SimplePropertyHandler() {
 
-        persistentEntity.doWithProperties(new SimplePropertyHandler() {
-            @Override
-            public void doWithPersistentProperty(PersistentProperty<?> pp) {
-                MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
-                builder.append(dialect.wrapColumnName(property.getColumnName())).append(",");
-            }
-        });
+			@Override
+			public void doWithPersistentProperty(PersistentProperty<?> pp) {
+				MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+				builder.append("#{").append(property.getName()).append(",jdbcType=").append(property.getJdbcType());
+				if (null != property.getSpecifiedTypeHandler()) {
+					builder.append(",typeHandler=").append(property.getSpecifiedTypeHandler().getName());
+				}
+				builder.append("},");
+			}
+		});
 
-        if (builder.charAt(builder.length() - 1) == ',') {
-            builder.deleteCharAt(builder.length() - 1);
-        }
-        builder.append(") values(");
+		if (builder.charAt(builder.length() - 1) == ',') {
+			builder.deleteCharAt(builder.length() - 1);
+		}
 
-        persistentEntity.doWithProperties(new SimplePropertyHandler() {
-            @Override
-            public void doWithPersistentProperty(PersistentProperty<?> pp) {
-                MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
-                builder.append("#{").append(property.getName()).append(",jdbcType=").append(property.getJdbcType());
-                if (null != property.getSpecifiedTypeHandler()) {
-                    builder.append(",typeHandler=").append(property.getSpecifiedTypeHandler().getName());
-                }
-                builder.append("},");
-            }
-        });
+		builder.append(")]]>");
 
-        if (builder.charAt(builder.length() - 1) == ',') {
-            builder.deleteCharAt(builder.length() - 1);
-        }
+		builder.append("</insert>");
+	}
 
-        builder.append(")]]>");
+	private void buildInnerResultMapId(final StringBuilder builder, final MybatisPersistentProperty idProperty,
+			final String prefix) {
 
-        builder.append("</insert>");
-    }
+		if (null != idProperty) {
+			if (idProperty.isCompositeId()) {
 
+				MybatisPersistentEntityImpl<?> idEntity = context.getPersistentEntity(idProperty.getActualType());
+				if (null != idEntity) {
+					idEntity.doWithProperties(new SimplePropertyHandler() {
 
-    private void buildInnerResultMapId(final StringBuilder builder, final MybatisPersistentProperty idProperty, final String prefix) {
+						@Override
+						public void doWithPersistentProperty(PersistentProperty<?> pp) {
+							MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+							builder.append(String.format(
+									"<id property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
+									idProperty.getName() + "." + property.getName(), alias(prefix + property.getName()),
+									property.getActualType().getName(), property.getJdbcType()));
+						}
+					});
+				}
 
-        if (null != idProperty) {
-            if (idProperty.isCompositeId()) {
+			}
+			else {
+				builder.append(String.format("<id property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
+						idProperty.getName(), alias(prefix + idProperty.getName()),
+						idProperty.getActualType().getName(), idProperty.getJdbcType()));
+			}
+		}
+	}
 
-                MybatisPersistentEntityImpl<?> idEntity = context.getPersistentEntity(idProperty.getActualType());
-                if (null != idEntity) {
-                    idEntity.doWithProperties(new SimplePropertyHandler() {
-                        @Override
-                        public void doWithPersistentProperty(PersistentProperty<?> pp) {
-                            MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
-                            builder.append(String.format("<id property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
-                                    idProperty.getName() + "." + property.getName(),
-                                    alias(prefix + property.getName()),
-                                    property.getActualType().getName(),
-                                    property.getJdbcType()
-                            ));
-                        }
-                    });
-                }
+	private void buildInnerResultMap(final StringBuilder builder, final MybatisPersistentEntity<?> persistentEntity,
+			final String prefix) {
 
-            } else {
-                builder.append(String.format("<id property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
-                        idProperty.getName(),
-                        alias(prefix + idProperty.getName()),
-                        idProperty.getActualType().getName(),
-                        idProperty.getJdbcType()
-                ));
-            }
-        }
-    }
+		final StringBuilder constructorBuilder = new StringBuilder();
+		final StringBuilder resultBuilder = new StringBuilder();
 
-    private void buildInnerResultMap(final StringBuilder builder, final MybatisPersistentEntity<?> persistentEntity, final String prefix) {
+		PreferredConstructor<?, MybatisPersistentProperty> persistenceConstructor = persistentEntity.getPersistenceConstructor();
+		if (null != persistenceConstructor && persistenceConstructor.hasParameters()) {
+			constructorBuilder.append("<constructor>");
 
-        final StringBuilder constructorBuilder = new StringBuilder();
-        final StringBuilder resultBuilder = new StringBuilder();
+			for (PreferredConstructor.Parameter<Object, MybatisPersistentProperty> parameter : persistenceConstructor.getParameters()) {
+				MybatisPersistentProperty property = persistentEntity.getPersistentProperty(parameter.getName());
+				if (null != property) {
+					if (property.isIdProperty()) {
+						if (property.isCompositeId()) {
+							MybatisPersistentEntityImpl<?> idEntity = context.getPersistentEntity(
+									property.getActualType());
+							if (null != idEntity) {
+								idEntity.doWithProperties(new SimplePropertyHandler() {
 
-        PreferredConstructor<?, MybatisPersistentProperty> persistenceConstructor = persistentEntity.getPersistenceConstructor();
-        if (null != persistenceConstructor && persistenceConstructor.hasParameters()) {
-            constructorBuilder.append("<constructor>");
+									@Override
+									public void doWithPersistentProperty(PersistentProperty<?> pp) {
+										MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+										constructorBuilder.append(
+												String.format("<idArg column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
+														alias(prefix + property.getName()),
+														property.getActualType().getName(), property.getJdbcType()));
+									}
+								});
+							}
+						}
+						else {
+							constructorBuilder.append(
+									String.format("<idArg column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
+											alias(prefix + property.getName()), property.getActualType().getName(),
+											property.getJdbcType()));
+						}
+					}
+					else {
+						constructorBuilder.append(String.format("<arg column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
+								alias(prefix + property.getName()), property.getActualType().getName(),
+								property.getJdbcType()));
+					}
+				}
+				else {
 
-            for (PreferredConstructor.Parameter<Object, MybatisPersistentProperty> parameter : persistenceConstructor.getParameters()) {
-                MybatisPersistentProperty property = persistentEntity.getPersistentProperty(parameter.getName());
-                if (null != property) {
-                    if (property.isIdProperty()) {
-                        if (property.isCompositeId()) {
-                            MybatisPersistentEntityImpl<?> idEntity = context.getPersistentEntity(property.getActualType());
-                            if (null != idEntity) {
-                                idEntity.doWithProperties(new SimplePropertyHandler() {
-                                    @Override
-                                    public void doWithPersistentProperty(PersistentProperty<?> pp) {
-                                        MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
-                                        constructorBuilder.append(String.format("<idArg column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
-                                                alias(prefix + property.getName()),
-                                                property.getActualType().getName(),
-                                                property.getJdbcType()
-                                        ));
-                                    }
-                                });
-                            }
-                        } else {
-                            constructorBuilder.append(String.format("<idArg column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
-                                    alias(prefix + property.getName()),
-                                    property.getActualType().getName(),
-                                    property.getJdbcType()
-                            ));
-                        }
-                    } else {
-                        constructorBuilder.append(String.format("<arg column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
-                                alias(prefix + property.getName()),
-                                property.getActualType().getName(),
-                                property.getJdbcType()
-                        ));
-                    }
-                } else {
+				}
+			}
 
+			constructorBuilder.append("</constructor>");
+		}
 
-                }
-            }
+		persistentEntity.doWithProperties(new SimplePropertyHandler() {
 
+			@Override
+			public void doWithPersistentProperty(PersistentProperty<?> pp) {
+				MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+				if (persistentEntity.isConstructorArgument(property)) {
+					return;
+				}
 
-            constructorBuilder.append("</constructor>");
-        }
+				if (property.isIdProperty()) {
+					buildInnerResultMapId(resultBuilder, property, prefix);
+					return;
+				}
+				resultBuilder.append(
+						String.format(
+								"<result property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\""
+										+ (null != property.getSpecifiedTypeHandler()
+												? (" typeHandler=\"" + property.getSpecifiedTypeHandler().getName()
+														+ "\"")
+												: "")
+										+ " />",
+								property.getName(), alias(prefix + property.getName()),
+								property.getActualType().getName(), property.getJdbcType()));
+			}
+		});
 
+		builder.append(constructorBuilder).append(resultBuilder);
+	}
 
-        persistentEntity.doWithProperties(new SimplePropertyHandler() {
-            @Override
-            public void doWithPersistentProperty(PersistentProperty<?> pp) {
-                MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
-                if (persistentEntity.isConstructorArgument(property)) {
-                    return;
-                }
+	private void buildResultMap(final StringBuilder builder) {
+		builder.append("<resultMap id=\"ResultMap\" type=\"" + domainClass.getName() + "\">");
 
+		buildInnerResultMap(builder, persistentEntity, "");
 
-                if (property.isIdProperty()) {
-                    buildInnerResultMapId(resultBuilder, property, prefix);
-                    return;
-                }
-                resultBuilder.append(String.format("<result property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\""
-                                + (null != property.getSpecifiedTypeHandler() ? (" typeHandler=\"" + property.getSpecifiedTypeHandler().getName() + "\"") : "")
-                                + " />",
-                        property.getName(),
-                        alias(prefix + property.getName()),
-                        property.getActualType().getName(),
-                        property.getJdbcType()
-                ));
-            }
-        });
+		builder.append("</resultMap>");
+	}
 
+	private String alias(String column) {
+		return column;
+	}
 
-        builder.append(constructorBuilder).append(resultBuilder);
-    }
+	private String quota(String alias) {
+		return dialect.openQuote() + alias + dialect.closeQuote();
+	}
 
-    private void buildResultMap(final StringBuilder builder) {
-        builder.append("<resultMap id=\"ResultMap\" type=\"" + domainClass.getName() + "\">");
+	/**
+	 * is ResultMap exists.
+	 *
+	 * @param name no need namespace.
+	 */
+	public boolean isResultMapExist(String name) {
+		if (null == configuration) {
+			return false;
+		}
+		return configuration.hasResultMap(domainClass.getName() + "." + name);
+	}
 
-        buildInnerResultMap(builder, persistentEntity, "");
+	/**
+	 * Is Fragment exists.
+	 */
+	public boolean isFragmentExist(String fragment) {
+		if (null == configuration) {
+			return false;
+		}
+		return configuration.getSqlFragments().containsKey(domainClass.getName() + "." + fragment);
+	}
 
-        builder.append("</resultMap>");
-    }
-
-
-    private String alias(String column) {
-        return column;
-    }
-
-    private String quota(String alias) {
-        return dialect.openQuote() + alias + dialect.closeQuote();
-    }
-
-    /**
-     * is ResultMap exists.
-     *
-     * @param name no need namespace.
-     */
-    public boolean isResultMapExist(String name) {
-        if (null == configuration) {
-            return false;
-        }
-        return configuration.hasResultMap(domainClass.getName() + "." + name);
-    }
-
-    /**
-     * Is Fragment exists.
-     */
-    public boolean isFragmentExist(String fragment) {
-        if (null == configuration) {
-            return false;
-        }
-        return configuration.getSqlFragments().containsKey(domainClass.getName() + "." + fragment);
-    }
-
-    /**
-     * is statement exists.
-     */
-    public boolean isStatementExist(String id) {
-        if (null == configuration) {
-            return false;
-        }
-        return configuration.hasStatement(domainClass.getName() + "." + id);
-    }
+	/**
+	 * is statement exists.
+	 */
+	public boolean isStatementExist(String id) {
+		if (null == configuration) {
+			return false;
+		}
+		return configuration.hasStatement(domainClass.getName() + "." + id);
+	}
 }
