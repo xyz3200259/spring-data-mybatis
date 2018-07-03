@@ -27,10 +27,7 @@ import java.io.Serializable;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.Types;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javax.sql.DataSource;
 
@@ -43,7 +40,6 @@ import org.springframework.data.mybatis.id.IdentityGenerator;
 import org.springframework.data.mybatis.repository.dialect.Dialect;
 import org.springframework.data.mybatis.utils.StringUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.DelegatingDataSource;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.jdbc.support.MetaDataAccessException;
 
@@ -56,9 +52,7 @@ import org.springframework.jdbc.support.MetaDataAccessException;
 public class TableGenerator implements IdentityGenerator<Serializable> {
 
 	private Log logger = LogFactory.getLog(TableGenerator.class);
-	
-	private final ReentrantReadWriteLock idGeneratorLock = new ReentrantReadWriteLock();
-	
+
 	/**
 	 * The default {@link #TABLE_PARAM} value
 	 */
@@ -112,47 +106,47 @@ public class TableGenerator implements IdentityGenerator<Serializable> {
 
 	private JdbcTemplate template;
 
-	private Map<String,AtomicLong>  nextVal = new ConcurrentHashMap<>();
-	
-	private Map<String,AtomicLong>  currentVal = new ConcurrentHashMap<>();
-	
 	public TableGenerator(DataSource dataSource, Dialect dialect) {
 		this.dataSource = dataSource;
 		this.dialect = dialect;
 		// 避免受到事务传播性影响
-		this.template = new JdbcTemplate(new DelegatingDataSource(dataSource));
+		this.template = new JdbcTemplate(dataSource);
 		initTable();
 	}
 
 	private void initTable() {
 		try {
-			JdbcUtils.extractDatabaseMetaData(dataSource, (DatabaseMetaData action) -> {
+			boolean result = (boolean) JdbcUtils.extractDatabaseMetaData(dataSource, (DatabaseMetaData action) -> {
 				ResultSet rs = null;
 				try {
 					// 使用 DatabaseMetaData 查找 table 
 					rs = action.getTables(null, null, tableName.toUpperCase(), new String[] { "TABLE" });
-					if (!rs.next()) {
-						try {
-							// 尝试直接执行查询
-							template.execute("select count(*) from " + tableName);
-						}
-						catch (Exception e1) {
-							logger.debug("Init Sequence table " + DEF_TABLE + " .");
-							try {
-								// 尝试新建表
-								template.execute(sqlCreateStrings());
-							}
-							catch (Exception e2) {
-								throw new MappingException("Create Sequence table fail: ", e2);
-							}
-						}
+					if (rs.next()) {
+						return true;
 					}
 				}
 				finally {
 					JdbcUtils.closeResultSet(rs);
 				}
-				return rs;
+				return false;
 			});
+
+			if (!result) {
+				try {
+					// 尝试直接执行查询
+					template.execute("select count(*) from " + tableName);
+				}
+				catch (Exception e1) {
+					logger.debug("Init Sequence table " + DEF_TABLE + " .");
+					try {
+						// 尝试新建表
+						template.execute(sqlCreateStrings());
+					}
+					catch (Exception e2) {
+						throw new MappingException("Create Sequence table fail: ", e2);
+					}
+				}
+			}
 		}
 		catch (MetaDataAccessException e) {
 			throw new MappingException("Init Sequence Table fail:", e);
@@ -161,7 +155,7 @@ public class TableGenerator implements IdentityGenerator<Serializable> {
 
 	@Override
 	public Serializable generate(PersistentProperty<?> persistentProperty) {
-		
+
 		int rows = 0;
 		Long generatedValue = null;
 		do {

@@ -36,6 +36,7 @@ import org.springframework.data.mybatis.id.CustomIdentityGeneratorFactory;
 import org.springframework.data.mybatis.id.IdentityGenerator;
 import org.springframework.data.mybatis.id.IdentityGeneratorFactory;
 import org.springframework.data.mybatis.repository.dialect.Dialect;
+import org.springframework.util.StringUtils;
 
 /**
  * @author 7cat
@@ -71,7 +72,7 @@ public class DefaultIdentityGeneratorFactory<ID extends Serializable, T>
 			return identityGenerator;
 		}
 		if (type == GenerationType.AUTO) {
-			if (null == generator) {
+			if (StringUtils.isEmpty(generator)) {
 				if (pp.getActualType().equals(String.class)) {
 					generator = DEFAULT_STRING_TYPE_ID_GENERATOR;
 				}
