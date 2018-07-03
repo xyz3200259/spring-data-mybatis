@@ -49,11 +49,11 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
 
 	private final MybatisMappingContext mappingContext;
 
-	private IdentityGeneratorFactory<?, ?, ?> identityGeneratorFactory;
+	private IdentityGeneratorFactory<?, ?> identityGeneratorFactory;
 
 	public MybatisRepositoryFactory(final MybatisMappingContext mappingContext,
 			final SqlSessionTemplate sessionTemplate, final Dialect dialect,
-			final IdentityGeneratorFactory<?, ?, ?> identityGeneratorFactory) {
+			final IdentityGeneratorFactory<?, ?> identityGeneratorFactory) {
 		Assert.notNull(sessionTemplate, "SqlSessionTemplate must not be null!");
 		Assert.notNull(dialect, "Dialect must not be null!");
 		this.mappingContext = mappingContext;

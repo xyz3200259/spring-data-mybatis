@@ -25,7 +25,7 @@ package org.springframework.data.mybatis.id.support;
 
 import java.util.UUID;
 
-import org.apache.ibatis.session.SqlSession;
+import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mybatis.id.IdentityGenerator;
 
 /**
@@ -35,7 +35,7 @@ import org.springframework.data.mybatis.id.IdentityGenerator;
 public class UUIDGenerator implements IdentityGenerator<String> {
 
 	@Override
-	public String generate(SqlSession session, Object metadata) {
+	public String generate(PersistentProperty<?> persistentProperty) {
 		return UUID.randomUUID().toString();
 	}
 }

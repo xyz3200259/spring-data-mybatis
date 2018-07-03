@@ -32,6 +32,6 @@ public interface MybatisPersistentProperty extends PersistentProperty<MybatisPer
 	String getColumnName();
 
 	boolean isCompositeId();
-
+	
 	Class<? extends TypeHandler<?>> getSpecifiedTypeHandler();
 }

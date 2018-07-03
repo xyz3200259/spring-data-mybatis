@@ -24,7 +24,7 @@ import org.springframework.data.mybatis.repository.dialect.pagination.LimitHandl
 /**
  * @author Jarvis Song
  */
-public class OracleDialect implements Dialect {
+public class OracleDialect extends Dialect {
 
     private static final AbstractLimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {
         @Override

@@ -24,7 +24,7 @@ import org.springframework.data.mybatis.repository.dialect.pagination.LimitHandl
 /**
  * @author Jarvis Song
  */
-public class PostgreSQLDialect implements Dialect {
+public class PostgreSQLDialect extends Dialect {
 
 
     private static final AbstractLimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {

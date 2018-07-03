@@ -41,7 +41,7 @@ import static org.apache.ibatis.type.JdbcType.*;
 /**
  * @author Jarvis Song
  */
-class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<MybatisPersistentProperty>
+public class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<MybatisPersistentProperty>
 		implements MybatisPersistentProperty {
 
 	private final Lazy<Boolean> isId = Lazy.of(() -> isAnnotationPresent(Id.class));

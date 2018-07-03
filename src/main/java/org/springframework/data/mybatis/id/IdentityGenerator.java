@@ -25,7 +25,7 @@ package org.springframework.data.mybatis.id;
 
 import java.io.Serializable;
 
-import org.apache.ibatis.session.SqlSession;
+import org.springframework.data.mapping.PersistentProperty;
 
 /**
  * @author 7cat
@@ -33,5 +33,5 @@ import org.apache.ibatis.session.SqlSession;
  */
 public interface IdentityGenerator <ID extends Serializable> {
 
-	public ID generate(SqlSession session, Object metadata);
+	public ID generate(PersistentProperty<?> persistentProperty);
 }

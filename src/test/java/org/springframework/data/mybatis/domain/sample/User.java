@@ -25,14 +25,12 @@ package org.springframework.data.mybatis.domain.sample;
 
 import java.util.Date;
 
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
 /**
- * 
  * @author 7cat
  * @since 1.0
  */
@@ -41,13 +39,11 @@ import javax.persistence.Table;
 public class User {
 
 	@Id
-	@GeneratedValue(generator = "uuid")
+	@GeneratedValue(generator = "sequeceTable")
 	private String id;
 
-	@Column(name = "FIRST_NAME")
 	private String firstName;
 
-	@Column(name = "LASTNAME")
 	private String lastName;
 
 	private int age;

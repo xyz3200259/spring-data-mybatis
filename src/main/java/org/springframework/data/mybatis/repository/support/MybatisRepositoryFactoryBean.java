@@ -43,7 +43,7 @@ public class MybatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID ext
 
 	private MybatisMappingContext mappingContext;
 
-	private IdentityGeneratorFactory<ID, T, ?> identityGeneratorFactory;
+	private IdentityGeneratorFactory<ID, T> identityGeneratorFactory;
 
 	/**
 	 * Creates a new {@link TransactionalRepositoryFactoryBeanSupport} for the
@@ -82,7 +82,7 @@ public class MybatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID ext
 		this.dialect = dialect;
 	}
 
-	public void setIdentityGeneratorFactory(IdentityGeneratorFactory<ID, T, ?> identityGeneratorFactory) {
+	public void setIdentityGeneratorFactory(IdentityGeneratorFactory<ID, T> identityGeneratorFactory) {
 		this.identityGeneratorFactory = identityGeneratorFactory;
 	}
 }

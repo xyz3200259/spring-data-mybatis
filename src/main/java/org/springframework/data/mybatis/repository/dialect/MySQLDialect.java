@@ -18,14 +18,47 @@
 
 package org.springframework.data.mybatis.repository.dialect;
 
+import java.sql.Types;
+
 import org.springframework.data.mybatis.repository.dialect.pagination.AbstractLimitHandler;
 import org.springframework.data.mybatis.repository.dialect.pagination.LimitHandler;
 
 /**
  * @author Jarvis Song
  */
-public class MySQLDialect implements Dialect {
+public class MySQLDialect extends Dialect {
 
+    public MySQLDialect() {
+        super();
+        registerColumnType(Types.BIT, "bit");
+        registerColumnType(Types.BIGINT, "bigint");
+        registerColumnType(Types.SMALLINT, "smallint");
+        registerColumnType(Types.TINYINT, "tinyint");
+        registerColumnType(Types.INTEGER, "integer");
+        registerColumnType(Types.CHAR, "char(1)");
+        registerColumnType(Types.FLOAT, "float");
+        registerColumnType(Types.DOUBLE, "double precision");
+        registerColumnType(Types.BOOLEAN, "bit"); // HHH-6935
+        registerColumnType(Types.DATE, "date");
+        registerColumnType(Types.TIME, "time");
+        registerColumnType(Types.TIMESTAMP, "datetime");
+        registerColumnType(Types.VARBINARY, "longblob");
+        registerColumnType(Types.VARBINARY, 16777215, "mediumblob");
+        registerColumnType(Types.VARBINARY, 65535, "blob");
+        registerColumnType(Types.VARBINARY, 255, "tinyblob");
+        registerColumnType(Types.BINARY, "binary($l)");
+        registerColumnType(Types.LONGVARBINARY, "longblob");
+        registerColumnType(Types.LONGVARBINARY, 16777215, "mediumblob");
+        registerColumnType(Types.NUMERIC, "decimal($p,$s)");
+        registerColumnType(Types.BLOB, "longblob");
+//		registerColumnType( Types.BLOB, 16777215, "mediumblob" );
+//		registerColumnType( Types.BLOB, 65535, "blob" );
+        registerColumnType(Types.CLOB, "longtext");
+        registerColumnType(Types.NCLOB, "longtext");
+//		registerColumnType( Types.CLOB, 16777215, "mediumtext" );
+//		registerColumnType( Types.CLOB, 65535, "text" );
+    }
+	
     private static final AbstractLimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {
         @Override
         public boolean supportsLimit() {

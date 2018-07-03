@@ -72,11 +72,11 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 
 	private final MybatisEntityInformation<T, ID> entityInformation;
 
-	private IdentityGeneratorFactory<ID, T, MybatisPersistentProperty> identityGeneratorFactory;
+	private IdentityGeneratorFactory<ID, T> identityGeneratorFactory;
 
 	public SimpleMybatisRepository(MybatisEntityInformation<T, ID> entityInformation,
 			SqlSessionTemplate sqlSessionTemplate,
-			IdentityGeneratorFactory<ID, T, MybatisPersistentProperty> identityGeneratorFactory) {
+			IdentityGeneratorFactory<ID, T> identityGeneratorFactory) {
 		super(sqlSessionTemplate);
 		this.entityInformation = entityInformation;
 		this.identityGeneratorFactory = identityGeneratorFactory;
@@ -122,11 +122,11 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 							GeneratedValue gv = p.findAnnotation(GeneratedValue.class);
 							if (null != gv) {
 								IdentityGenerator<ID> generator = identityGeneratorFactory.resolve(gv.strategy(),
-										gv.generator(), entityInformation.getPersistentEntity());
+										gv.generator(), p);
 								Assert.notNull(generator,
-										String.format("No suitable IdentityGenerator foud for Entity %s Property %s",
+										String.format("No suitable IdentityGenerator found for Entity %s Property %s",
 												entityInformation.getEntityName(), p.getName()));
-								ID id = generator.generate(getSqlSession(), p);
+								ID id = generator.generate(p);
 								ReflectionUtils.setField(p.getField(), entity,
 										idConverter.convertIfNecessary(id, p.getActualType()));
 							}
@@ -270,7 +270,7 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 
 	@Override
 	public <S extends T> boolean exists(Example<S> example) {
-		return count(example)!=0;
+		return count(example) != 0;
 	}
 
 	@Override
@@ -297,10 +297,10 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 				ExampleInfo info = new ExampleInfo();
 				Object value = beanWrapper.getPropertyValue(p.getName());
 
-				if(accesser.isIgnoredPath(p.getName())) {
+				if (accesser.isIgnoredPath(p.getName())) {
 					return;
 				}
-				
+
 				if (null == value) {
 					if (matcher.getNullHandler().equals(ExampleMatcher.NullHandler.INCLUDE)) {
 						info.setIncludeNull(true);
@@ -312,7 +312,8 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 					if (accesser.isIgnoreCaseForPath(p.getName())) {
 						info.setIgnoreCase(true);
 						info.setValue(((String) value).toUpperCase());
-					}else {
+					}
+					else {
 						info.setValue(value);
 					}
 					switch (accesser.getStringMatcherForPath(p.getName())) {
@@ -339,7 +340,6 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 					info.setMatcher(StringMatcher.EXACT.toString());
 					info.setValue(value);
 				}
-
 				theExample.put(p.getName(), info);
 			}
 		});

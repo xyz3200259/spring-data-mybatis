@@ -21,17 +21,13 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.springframework.data.mybatis.id.support;
+package org.springframework.data.mybatis.id;
 
 import java.io.Serializable;
-
-import org.springframework.data.mapping.PersistentProperty;
-import org.springframework.data.mybatis.id.IdentityGeneratorFactory;
 
 /**
  * @author 7cat
  * @since 1.0
  */
-public interface CustomIdentityGeneratorFactory<ID extends Serializable, T, P extends PersistentProperty<P>>
-		extends IdentityGeneratorFactory<ID, T, P> {
+public interface CustomIdentityGeneratorFactory<ID extends Serializable, T> extends IdentityGeneratorFactory<ID, T> {
 }

@@ -21,19 +21,25 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.springframework.data.mybatis.id;
+package org.springframework.data.mybatis.annotations;
 
-import java.io.Serializable;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-import javax.persistence.GenerationType;
-
-import org.springframework.data.mapping.PersistentProperty;
+import static java.lang.annotation.ElementType.*;
+import static java.lang.annotation.RetentionPolicy.*;
 
 /**
+ * Annotated to customize generated format: {yyyyMMdd}{########} ---> 2018070300000001
+ * 
  * @author 7cat
  * @since 1.0
  */
-public interface IdentityGeneratorFactory<ID extends Serializable, T> {
+@Target({ METHOD, FIELD })
+@Retention(RUNTIME)
+public @interface Format {
 
-	IdentityGenerator<ID> resolve(GenerationType type, String generator, PersistentProperty<?> pp);
+	String value() default "";
+
+	String pattern() default "";
 }

@@ -101,4 +101,15 @@ public abstract class StringUtils {
             return template.substring(0, loc) + replacement + template.substring(loc + placeholder.length());
         }
     }
+    
+    public static String qualify(String prefix, String name) {
+		if ( name == null || prefix == null ) {
+			throw new NullPointerException();
+		}
+		return new StringBuffer( prefix.length() + name.length() + 1 )
+				.append(prefix)
+				.append('.')
+				.append(name)
+				.toString();
+	}
 }

@@ -31,45 +31,61 @@ import javax.persistence.GenerationType;
 
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentProperty;
+import org.springframework.data.mybatis.id.CustomIdentityGeneratorFactory;
 import org.springframework.data.mybatis.id.IdentityGenerator;
 import org.springframework.data.mybatis.id.IdentityGeneratorFactory;
+import org.springframework.data.mybatis.repository.dialect.Dialect;
 
 /**
  * @author 7cat
  * @since 1.0
  */
-public class DefaultIdentityGeneratorFactory<ID extends Serializable, T, P extends PersistentProperty<P>>
-		implements IdentityGeneratorFactory<ID, T, P> {
+public class DefaultIdentityGeneratorFactory<ID extends Serializable, T>
+		implements IdentityGeneratorFactory<ID, T> {
 
-	public DefaultIdentityGeneratorFactory(SqlSessionFactory sqlSessionFactory) {
-		autoGenerationTypeGeneratorMapping.put("uuid", new UUIDGenerator());
-	}
+	public static final String DEFAULT_STRING_TYPE_ID_GENERATOR = "uuid";
+
+	public static final String DEFAULT_NUMERICAL_TYPE_GENERATOR = "sequenceTable";
 
 	private Map<String, IdentityGenerator<? extends Serializable>> autoGenerationTypeGeneratorMapping = new HashMap<>();
 
+	public DefaultIdentityGeneratorFactory(SqlSessionFactory sqlSessionFactory ,Dialect dialect) {
+		IdentityGenerator<? extends Serializable> uuidGenerator = new UUIDGenerator();
+		autoGenerationTypeGeneratorMapping.put(DEFAULT_STRING_TYPE_ID_GENERATOR, uuidGenerator);
+		IdentityGenerator<? extends Serializable> sequenceTableGenerator = new TableGenerator(sqlSessionFactory.getConfiguration().getEnvironment().getDataSource(), dialect);
+		autoGenerationTypeGeneratorMapping.put(DEFAULT_NUMERICAL_TYPE_GENERATOR, sequenceTableGenerator);
+	}
+
 	@Autowired(required = false)
-	private CustomIdentityGeneratorFactory<ID, T, P> customIdentityGeneratorFactory;
+	private CustomIdentityGeneratorFactory<ID, T> customIdentityGeneratorFactory;
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public IdentityGenerator<ID> resolve(GenerationType type, String generator, PersistentEntity<T, P> pe) {
+	public IdentityGenerator<ID> resolve(GenerationType type, String generator, PersistentProperty<?> pp) {
 		IdentityGenerator<ID> identityGenerator = null;
 		if (customIdentityGeneratorFactory != null) {
-			identityGenerator = customIdentityGeneratorFactory.resolve(type, generator, pe);
+			identityGenerator = customIdentityGeneratorFactory.resolve(type, generator, pp);
 		}
 		if (identityGenerator != null) {
 			return identityGenerator;
 		}
 		if (type == GenerationType.AUTO) {
+			if (null == generator) {
+				if (pp.getActualType().equals(String.class)) {
+					generator = DEFAULT_STRING_TYPE_ID_GENERATOR;
+				}
+				else if (pp.getActualType().equals(Long.class) || pp.getActualType().equals(Integer.class)) {
+					generator = DEFAULT_NUMERICAL_TYPE_GENERATOR;
+				}
+			}
 			identityGenerator = (IdentityGenerator<ID>) autoGenerationTypeGeneratorMapping.get(generator);
 		}
 		return identityGenerator;
 	}
 
 	public void setCustomIdentityGeneratorFactory(
-			CustomIdentityGeneratorFactory<ID, T, P> customIdentityGeneratorFactory) {
+			CustomIdentityGeneratorFactory<ID, T> customIdentityGeneratorFactory) {
 		this.customIdentityGeneratorFactory = customIdentityGeneratorFactory;
 	}
 }

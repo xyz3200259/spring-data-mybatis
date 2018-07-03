@@ -23,37 +23,54 @@
 
 package org.springframework.data.mybatis.id.support;
 
-import java.io.Serializable;
-
-import javax.persistence.GenerationType;
+import javax.sql.DataSource;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mapping.PersistentEntity;
+import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mybatis.config.sample.TestConfig;
-import org.springframework.data.mybatis.id.IdentityGenerator;
-import org.springframework.data.mybatis.id.IdentityGeneratorFactory;
+import org.springframework.data.mybatis.domain.sample.User;
+import org.springframework.data.mybatis.repository.dialect.Dialect;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.Assert.*;
 
+
 /**
+ * 
  * @author 7cat
  * @since 1.0
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = TestConfig.class)
-public class DefaultIdentityGeneratorFactoryTest<ID extends Serializable, T> {
+@Transactional
+public class TableGeneratorTest <P extends PersistentProperty<P>>{
 
 	@Autowired
-	private IdentityGeneratorFactory<ID, T> identityGeneratorFactory;
-
+	private DataSource dataSource;
+	
+	@Autowired
+	private Dialect dialect;
+	
 	@Test
-	public void testResolve() {
-		IdentityGenerator<ID> identityGenerator = identityGeneratorFactory.resolve(GenerationType.AUTO, "uuid", null);
-		assertNotNull(identityGenerator);
-		assertTrue(identityGenerator instanceof UUIDGenerator);
+	public void testGenerate() {
+		TableGenerator generator = new TableGenerator(dataSource, dialect);
+		PersistentProperty<?>  pp=Mockito.mock(PersistentProperty.class);
+		Mockito.when(pp.getOwner()).thenAnswer((InvocationOnMock mock)->{
+			PersistentEntity<?, ?> pe = Mockito.mock(PersistentEntity.class);
+			Mockito.when(pe.getName()).thenAnswer((InvocationOnMock iom)->User.class.getName());
+			return pe;
+		});
+		Mockito.when(pp.getName()).thenReturn("id");
+		assertEquals(new Long(1), generator.generate(pp));
+		assertEquals(new Long(2), generator.generate(pp));
+		assertEquals(new Long(3), generator.generate(pp));
+		assertEquals(new Long(4), generator.generate(pp));
 	}
-
 }
