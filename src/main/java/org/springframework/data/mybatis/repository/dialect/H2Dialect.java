@@ -78,11 +78,6 @@ public class H2Dialect extends Dialect {
     };
 
     @Override
-    public String getDatabaseId() {
-        return "h2";
-    }
-
-    @Override
     public LimitHandler getLimitHandler() {
         return LIMIT_HANDLER;
     }

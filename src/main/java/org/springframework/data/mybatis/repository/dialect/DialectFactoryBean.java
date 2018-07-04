@@ -34,73 +34,77 @@ import org.springframework.util.Assert;
  */
 public class DialectFactoryBean implements FactoryBean<Dialect>, InitializingBean {
 
-    private Dialect           dialect;
-    private SqlSessionFactory sqlSessionFactory;
-    public static final int NO_VERSION = -9999;
+	private Dialect dialect;
 
-    @Override
-    public Dialect getObject() throws Exception {
+	private SqlSessionFactory sqlSessionFactory;
 
-        if (null == dialect) {
-            afterPropertiesSet();
-        }
-        return dialect;
-    }
+	public static final int NO_VERSION = -9999;
 
-    @Override
-    public Class<?> getObjectType() {
-        return null == dialect ? Dialect.class : dialect.getClass();
-    }
+	@Override
+	public Dialect getObject() throws Exception {
 
-    @Override
-    public boolean isSingleton() {
-        return true;
-    }
+		if (null == dialect) {
+			afterPropertiesSet();
+		}
+		return dialect;
+	}
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        Assert.notNull(sqlSessionFactory, "SqlSessionFactory must not be null!");
+	@Override
+	public Class<?> getObjectType() {
+		return null == dialect ? Dialect.class : dialect.getClass();
+	}
 
-        DataSource dataSource = sqlSessionFactory.getConfiguration().getEnvironment().getDataSource();
-        Connection conn = null;
-        try {
-            conn = dataSource.getConnection();
-            DatabaseMetaData metaData = conn.getMetaData();
+	@Override
+	public boolean isSingleton() {
+		return true;
+	}
 
-            this.dialect = getDialect(metaData);
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		Assert.notNull(sqlSessionFactory, "SqlSessionFactory must not be null!");
 
-        } finally {
-            if (null != conn) {
-                conn.close();
-            }
-        }
-    }
+		DataSource dataSource = sqlSessionFactory.getConfiguration().getEnvironment().getDataSource();
+		Connection conn = null;
+		try {
+			conn = dataSource.getConnection();
+			DatabaseMetaData metaData = conn.getMetaData();
 
-    private Dialect getDialect(DatabaseMetaData metaData) throws SQLException {
-        final String databaseName = metaData.getDatabaseProductName();
-        if ("H2".equals(databaseName)) {
-            return new H2Dialect();
-        }
-        if ("MySQL".equals(databaseName)) {
-//            if (majorVersion >= 5 ) {
-//                return new MySQL5Dialect();
-//            }
-            return new MySQLDialect();
-        }
-        if (databaseName.startsWith("Microsoft SQL Server")) {
-            return new SQLServerDialect();
-        }
-        if ("Oracle".equals(databaseName)) {
-            return new OracleDialect();
-        }
+			this.dialect = getDialect(metaData);
 
-        if ("PostgreSQL".equals(databaseName)) {
-            return new PostgreSQLDialect();
-        }
-        return null;
-    }
+		}
+		finally {
+			if (null != conn) {
+				conn.close();
+			}
+		}
+	}
 
-    public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
-        this.sqlSessionFactory = sqlSessionFactory;
-    }
+	private Dialect getDialect(DatabaseMetaData metaData) throws SQLException {
+		final String databaseName = metaData.getDatabaseProductName();
+		if ("H2".equals(databaseName)) {
+			return new H2Dialect();
+		}
+		if ("MySQL".equals(databaseName)) {
+			return new MySQLDialect();
+		}
+		if (databaseName.startsWith("Microsoft SQL Server")) {
+			return new SQLServerDialect();
+		}
+		if ("Oracle".equals(databaseName)) {
+			return new OracleDialect();
+		}
+
+		if ("PostgreSQL".equals(databaseName)) {
+			return new PostgreSQLDialect();
+		}
+
+		if (databaseName.startsWith("DB2/")) {
+			return new DB2Dialect();
+		}
+		return new DB2Dialect();
+	}
+
+	public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
+		this.sqlSessionFactory = sqlSessionFactory;
+	}
 }

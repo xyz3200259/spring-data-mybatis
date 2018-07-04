@@ -41,7 +41,6 @@ public class OracleDialect extends Dialect {
         @Override
         public String processSql(boolean hasOffset, String columns, String from, String condition, String sorts) {
 
-
             final StringBuilder pagingSelect = new StringBuilder();
             if (hasOffset) {
                 pagingSelect.append("select * from ( select row_.*, rownum rownum_ from ( ");
@@ -59,11 +58,6 @@ public class OracleDialect extends Dialect {
 
         }
     };
-
-    @Override
-    public String getDatabaseId() {
-        return "oracle";
-    }
 
     @Override
     public LimitHandler getLimitHandler() {

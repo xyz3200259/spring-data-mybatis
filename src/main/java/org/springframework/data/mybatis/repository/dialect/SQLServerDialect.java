@@ -87,11 +87,6 @@ public class SQLServerDialect extends Dialect {
     }
 
     @Override
-    public String getDatabaseId() {
-        return "sqlserver";
-    }
-
-    @Override
     public LimitHandler getLimitHandler() {
         return LIMIT_HANDLER;
     }

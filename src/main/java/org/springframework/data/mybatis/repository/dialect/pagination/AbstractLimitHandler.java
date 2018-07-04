@@ -30,7 +30,7 @@ public abstract class AbstractLimitHandler implements LimitHandler {
 		return supportsLimit();
 	}
 
-	public String processSql(boolean hasFirstRow, String columns, String from,
+	public String processSql(String columns, String from,
 			String condition, String sorts) {
 		throw new UnsupportedOperationException(
 				"Paged queries not supported by " + getClass().getName());

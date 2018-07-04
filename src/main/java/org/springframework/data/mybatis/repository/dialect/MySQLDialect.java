@@ -79,11 +79,6 @@ public class MySQLDialect extends Dialect {
     };
 
     @Override
-    public String getDatabaseId() {
-        return "mysql";
-    }
-
-    @Override
     public LimitHandler getLimitHandler() {
         return LIMIT_HANDLER;
     }

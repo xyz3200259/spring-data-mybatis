@@ -160,7 +160,9 @@ public abstract class MybatisQueryExecution {
             if (parameters.hasSortParameter()) {
                 parameter.put("_sorts", values[parameters.getSortIndex()]);
             } else {
-                parameter.put("_sorts", pageable.getSort());
+            	if(pageable.getSort()!=null&&pageable.getSort().isSorted()) {
+            		parameter.put("_sorts", pageable.getSort());	
+            	}
             }
             parameter.put("offset", pageable.getOffset());
             parameter.put("pageSize", pageable.getPageSize() + 1);
@@ -194,7 +196,9 @@ public abstract class MybatisQueryExecution {
             if (parameters.hasSortParameter()) {
                 parameter.put("_sorts", values[parameters.getSortIndex()]);
             } else if (null != pager) {
-                parameter.put("_sorts", pager.getSort());
+            	if(pager.getSort()!=null&&pager.getSort().isSorted()) {
+            		parameter.put("_sorts", pager.getSort());	
+            	}
             }
             parameter.put("offset", null == pager ? 0 : pager.getOffset());
             parameter.put("pageSize", null == pager ? Integer.MAX_VALUE : pager.getPageSize());

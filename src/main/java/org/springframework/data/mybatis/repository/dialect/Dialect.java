@@ -67,10 +67,6 @@ public class Dialect {
 		registerColumnType(Types.NCLOB, "nclob");
 	}
 
-	public String getDatabaseId() {
-		return null;
-	}
-
 	public LimitHandler getLimitHandler() {
 		return null;
 	}

@@ -61,11 +61,6 @@ public class PostgreSQLDialect extends Dialect {
     }
 
     @Override
-    public String getDatabaseId() {
-        return "postgresql";
-    }
-
-    @Override
     public LimitHandler getLimitHandler() {
         return LIMIT_HANDLER;
     }
