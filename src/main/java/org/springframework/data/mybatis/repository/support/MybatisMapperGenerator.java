@@ -61,9 +61,9 @@ public class MybatisMapperGenerator {
             case CONTAINING:
             case NOT_CONTAINING:
                 if (ignoreCaseType == ALWAYS || ignoreCaseType == WHEN_POSSIBLE) {
-                    builder.append("concat('%',upper(#{" + properties[0] + "}),'%')");
+                    builder.append("concat('%',concat(upper(#{" + properties[0] + "}),'%'))");
                 } else {
-                    builder.append("concat('%',#{" + properties[0] + "},'%')");
+                    builder.append("concat('%',concat(#{" + properties[0] + "},'%'))");
                 }
                 break;
             case STARTING_WITH:
