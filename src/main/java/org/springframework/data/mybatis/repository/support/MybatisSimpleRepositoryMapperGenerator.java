@@ -48,8 +48,8 @@ public class MybatisSimpleRepositoryMapperGenerator {
 	private transient static final Logger logger = LoggerFactory.getLogger(
 			MybatisSimpleRepositoryMapperGenerator.class);
 
-	private static final String MAPPER_BEGIN = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-			+ "<!DOCTYPE mapper PUBLIC \"-//mybatis.org//DTD Mapper 3.0//EN\" \"http://mybatis.org/dtd/mybatis-3-mapper.dtd\">";
+	private static final String MAPPER_BEGIN = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" 
+	                                         + "<!DOCTYPE mapper PUBLIC \"-//mybatis.org//DTD Mapper 3.0//EN\" \"http://mybatis.org/dtd/mybatis-3-mapper.dtd\">";
 
 	private static final String MAPPER_END = "</mapper>";
 
@@ -92,8 +92,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
 			throw new MappingException("create auto mapping error for " + namespace, e);
 		}
 		if (logger.isDebugEnabled()) {
-			logger.debug("\n******************* Auto Generate MyBatis Mapping XML (" + namespace
-					+ ") *******************\n" + xml);
+			logger.debug("\n******************* Auto Generate MyBatis Mapping XML (" + namespace + ") *******************\n" + xml);
 		}
 		InputStream inputStream = null;
 		try {
@@ -129,8 +128,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
 		builder.append("<mapper namespace=\"" + domainClass.getName() + "\">");
 
 		if (!isFragmentExist("TABLE_NAME")) {
-			builder.append(
-					"<sql id=\"TABLE_NAME\">" + dialect.wrapTableName(persistentEntity.getTableName()) + "</sql>");
+			builder.append("<sql id=\"TABLE_NAME\">" + dialect.wrapTableName(persistentEntity.getTableName()) + "</sql>");
 		}
 		
 		if (!isFragmentExist("_EXAMPLE")) {

@@ -61,7 +61,7 @@ public class ExampleGenerator {
     		
     		// EXTRACT
     		builder.append("<if test=\"_example."+property.getName()+" != null and _example."+property.getName()+".value!=null  and _example."+property.getName()+".matcher=='EXACT' and _example."+property.getName()+".ignoreCase \">");
-    		builder.append(" and ").append(quota(dialect,alias)).append(".").append(columnName);
+    		builder.append(" and ").append(quota(dialect,alias)).append(".").append(builder.append("upper(").append(columnName).append(")"));
     		builder.append(generator.buildConditionOperate(Type.SIMPLE_PROPERTY));
     		builder.append(generator.buildConditionCaluse(Type.SIMPLE_PROPERTY, IgnoreCaseType.WHEN_POSSIBLE, new String [] {"_example."+property.getName()+".value"}));
     		builder.append("</if>");
@@ -74,7 +74,7 @@ public class ExampleGenerator {
     		
     		// CONTAINING
     		builder.append("<if test=\"_example."+property.getName()+" != null and _example."+property.getName()+".value!=null  and _example."+property.getName()+".matcher=='CONTAINING' and _example."+property.getName()+".ignoreCase \">");
-    		builder.append(" and ").append(quota(dialect,alias)).append(".").append(columnName);
+    		builder.append(" and ").append(quota(dialect,alias)).append(".").append(builder.append("upper(").append(columnName).append(")"));
     		builder.append(generator.buildConditionOperate(Type.CONTAINING));
     		builder.append(generator.buildConditionCaluse(Type.CONTAINING, IgnoreCaseType.WHEN_POSSIBLE, new String [] {"_example."+property.getName()+".value"}));
     		builder.append("</if>");
@@ -87,7 +87,7 @@ public class ExampleGenerator {
     		
     		// STARTING_WITH
     		builder.append("<if test=\"_example."+property.getName()+" != null and _example."+property.getName()+".value!=null  and _example."+property.getName()+".matcher=='STARTING' and _example."+property.getName()+".ignoreCase \">");
-    		builder.append(" and ").append(quota(dialect,alias)).append(".").append(columnName);
+    		builder.append(" and ").append(quota(dialect,alias)).append(".").append(builder.append("upper(").append(columnName).append(")"));
     		builder.append(generator.buildConditionOperate(Type.STARTING_WITH));
     		builder.append(generator.buildConditionCaluse(Type.STARTING_WITH, IgnoreCaseType.WHEN_POSSIBLE, new String [] {"_example."+property.getName()+".value"}));
     		builder.append("</if>");
@@ -100,7 +100,7 @@ public class ExampleGenerator {
     		
     		// ENDING_WITH
     		builder.append("<if test=\"_example."+property.getName()+" != null and _example."+property.getName()+".value!=null  and _example."+property.getName()+".matcher=='ENDING' and _example."+property.getName()+".ignoreCase \">");
-    		builder.append(" and ").append(quota(dialect,alias)).append(".").append(columnName);
+    		builder.append(" and ").append(quota(dialect,alias)).append(".").append(builder.append("upper(").append(columnName).append(")"));
     		builder.append(generator.buildConditionOperate(Type.ENDING_WITH));
     		builder.append(generator.buildConditionCaluse(Type.ENDING_WITH, IgnoreCaseType.WHEN_POSSIBLE, new String [] {"_example."+property.getName()+".value"}));
     		builder.append("</if>");
