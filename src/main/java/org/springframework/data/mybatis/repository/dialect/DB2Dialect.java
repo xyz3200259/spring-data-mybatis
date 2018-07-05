@@ -24,6 +24,7 @@ import org.springframework.data.mybatis.repository.dialect.pagination.AbstractLi
 import org.springframework.data.mybatis.repository.dialect.pagination.LimitHandler;
 
 /**
+ * An SQL dialect for DB2.
  * 
  * @author 7cat
  * @since 1.0

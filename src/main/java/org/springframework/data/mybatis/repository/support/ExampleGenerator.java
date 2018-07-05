@@ -30,7 +30,7 @@ import org.springframework.data.repository.query.parser.Part.IgnoreCaseType;
 import org.springframework.data.repository.query.parser.Part.Type;
 
 /**
- * TODO 后续重构.
+ * SQL 生成器生来生成  'findByExample' 风格的 SQL.
  * @author 7cat
  * @since 1.0
  */

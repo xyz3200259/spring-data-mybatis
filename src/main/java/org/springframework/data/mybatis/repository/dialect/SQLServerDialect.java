@@ -22,6 +22,8 @@ import org.springframework.data.mybatis.repository.dialect.pagination.AbstractLi
 import org.springframework.data.mybatis.repository.dialect.pagination.LimitHandler;
 
 /**
+ * An SQL dialect for SQLServer.
+ * 
  * @author Jarvis Song
  */
 public class SQLServerDialect extends Dialect {

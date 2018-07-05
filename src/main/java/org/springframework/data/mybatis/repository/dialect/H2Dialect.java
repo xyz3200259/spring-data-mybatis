@@ -24,7 +24,7 @@ import org.springframework.data.mybatis.repository.dialect.pagination.AbstractLi
 import org.springframework.data.mybatis.repository.dialect.pagination.LimitHandler;
 
 /**
- * A localism compatible with the H2 database.
+ * An SQL dialect for H2.
  *
  * @author Jarvis Song
  */

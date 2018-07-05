@@ -159,7 +159,7 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 	@Override
 	public Optional<T> findById(ID id) {
 		Assert.notNull(id, "id can not be null");
-		return selectOne(STATEMENT_GET_BY_ID, id);
+		return Optional.ofNullable(selectOne(STATEMENT_GET_BY_ID, id));
 	}
 
 	@Override

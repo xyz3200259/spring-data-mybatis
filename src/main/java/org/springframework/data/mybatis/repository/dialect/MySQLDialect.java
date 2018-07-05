@@ -24,6 +24,8 @@ import org.springframework.data.mybatis.repository.dialect.pagination.AbstractLi
 import org.springframework.data.mybatis.repository.dialect.pagination.LimitHandler;
 
 /**
+ * An SQL dialect for MYSQL.
+ * 
  * @author Jarvis Song
  */
 public class MySQLDialect extends Dialect {

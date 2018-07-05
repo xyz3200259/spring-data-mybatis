@@ -22,6 +22,8 @@ import org.springframework.data.mybatis.repository.dialect.pagination.AbstractLi
 import org.springframework.data.mybatis.repository.dialect.pagination.LimitHandler;
 
 /**
+ * An SQL dialect for Postgre.
+ * 
  * @author Jarvis Song
  */
 public class PostgreSQLDialect extends Dialect {
