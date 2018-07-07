@@ -55,10 +55,6 @@ public class User {
 	@Column(name = "LASTNAME")
 	private String lastName;
 
-	private int age;
-
-	private int active;
-
 	@CreatedDate
 	private Date createdAt;
 
@@ -70,6 +66,10 @@ public class User {
 
 	@CreatedBy
 	private String creator;
+
+	private Integer age;
+
+	private Integer active;
 
 	private String emailAddress;
 
@@ -106,22 +106,6 @@ public class User {
 
 	public void setLastName(String lastName) {
 		this.lastName = lastName;
-	}
-
-	public int getAge() {
-		return age;
-	}
-
-	public void setAge(int age) {
-		this.age = age;
-	}
-
-	public int getActive() {
-		return active;
-	}
-
-	public void setActive(int active) {
-		this.active = active;
 	}
 
 	public Date getCreatedAt() {
@@ -203,4 +187,21 @@ public class User {
 	public void setCreator(String creator) {
 		this.creator = creator;
 	}
+
+	public Integer getAge() {
+		return age;
+	}
+
+	public void setAge(Integer age) {
+		this.age = age;
+	}
+
+	public Integer getActive() {
+		return active;
+	}
+
+	public void setActive(Integer active) {
+		this.active = active;
+	}
+
 }

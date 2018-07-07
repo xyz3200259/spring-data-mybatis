@@ -62,8 +62,7 @@ import org.springframework.util.Assert;
  * @author Jarvis Song
  */
 @Repository
-public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSessionRepositorySupport
-		implements MybatisRepository<T, ID> {
+public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSessionRepositorySupport implements MybatisRepository<T, ID> {
 
 	private static final String STATEMENT_INSERT = "_insert";
 
@@ -74,6 +73,8 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 	private static final String STATEMENT_FIND_BY_ID = "_findById";
 
 	private static final String STATEMENT_DELETE_BY_ID = "_deleteById";
+	
+	private static final String STATEMENT_DELETE_BY_EXAMPLE = "_deleteByExample";
 
 	private TypeConverter simpleConverter = new SimpleTypeConverter();
 
@@ -400,5 +401,13 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 			}
 		});
 		return theExample;
+	}
+
+	@Override
+	public <S extends T> int delete(Example<S> example) {
+		Assert.notNull(example, "Example can not be null!");
+		Map<String, Object> params = new HashMap<>();
+		params.put("_example", buildExample(example));
+		return super.delete(STATEMENT_DELETE_BY_EXAMPLE, params);
 	}
 }

@@ -63,4 +63,6 @@ public interface MybatisRepository<T, ID extends Serializable>
 	<S extends T> List<S> findAll(Example<S> example, Sort sort);
 
 	void deleteInBatch(Iterable<T> entities);
+	
+	<S extends T> int delete(Example<S> example);
 }

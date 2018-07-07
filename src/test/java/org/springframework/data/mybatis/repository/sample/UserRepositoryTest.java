@@ -28,6 +28,7 @@ import java.util.Date;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Example;
 import org.springframework.data.mybatis.config.sample.TestConfig;
 import org.springframework.data.mybatis.domain.sample.User;
 import org.springframework.test.context.ContextConfiguration;
@@ -62,6 +63,13 @@ public class UserRepositoryTest {
 		assertNotNull(user.getUpdator());
 	}
 	
+	@Test
+	public void testDeleteByExample() {
+		User user = new User();
+		repository.save(user);
+		repository.delete(Example.of(user));
+		assertFalse(repository.findById(user.getId()).isPresent());
+	}
 
 	@Test
 	public void testFindUseMapper() {
