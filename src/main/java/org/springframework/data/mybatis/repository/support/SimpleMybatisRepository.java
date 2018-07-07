@@ -310,28 +310,35 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 	private void processAuditingMetadata(T entity, boolean create) {
 		Object auditor = auditorAware != null ? auditorAware.getCurrentAuditor().orElse(null) : null;
 		if (create) {
-			MybatisPersistentProperty createDateProperty = entityInformation.getPersistentEntity().getPersistentProperty(
+			MybatisPersistentProperty createDate = entityInformation.getPersistentEntity().getPersistentProperty(
 					CreatedDate.class);
-			ReflectionUtils.setFieldIfNull(createDateProperty.getField(), entity,
-					simpleConverter.convertIfNecessary(new Date(), createDateProperty.getActualType()));
+			if (createDate != null) {
+				ReflectionUtils.setFieldIfNull(createDate.getField(), entity,
+						simpleConverter.convertIfNecessary(new Date(), createDate.getActualType()));
+			}
 			if (null != auditor) {
-				MybatisPersistentProperty creatorProperty = entityInformation.getPersistentEntity().getPersistentProperty(
+				MybatisPersistentProperty createdBy = entityInformation.getPersistentEntity().getPersistentProperty(
 						CreatedBy.class);
-				ReflectionUtils.setFieldIfNull(creatorProperty.getField(), entity,
-						simpleConverter.convertIfNecessary(auditor, creatorProperty.getActualType()));
+				if (createdBy != null) {
+					ReflectionUtils.setFieldIfNull(createdBy.getField(), entity,
+							simpleConverter.convertIfNecessary(auditor, createdBy.getActualType()));
+				}
 			}
 		}
 		else {
 			MybatisPersistentProperty lastModifiedDate = entityInformation.getPersistentEntity().getPersistentProperty(
 					LastModifiedDate.class);
-			ReflectionUtils.setFieldIfNull(lastModifiedDate.getField(), entity,
-					simpleConverter.convertIfNecessary(new Date(), lastModifiedDate.getActualType()));
-
+			if (lastModifiedDate != null) {
+				ReflectionUtils.setFieldIfNull(lastModifiedDate.getField(), entity,
+						simpleConverter.convertIfNecessary(new Date(), lastModifiedDate.getActualType()));
+			}
 			if (null != auditor) {
 				MybatisPersistentProperty lastModifiedBy = entityInformation.getPersistentEntity().getPersistentProperty(
 						LastModifiedBy.class);
-				ReflectionUtils.setFieldIfNull(lastModifiedBy.getField(), entity,
-						simpleConverter.convertIfNecessary(auditor, lastModifiedBy.getActualType()));
+				if (lastModifiedBy != null) {
+					ReflectionUtils.setFieldIfNull(lastModifiedBy.getField(), entity,
+							simpleConverter.convertIfNecessary(auditor, lastModifiedBy.getActualType()));
+				}
 			}
 		}
 	}

@@ -30,7 +30,7 @@ public interface MybatisPersistentProperty extends PersistentProperty<MybatisPer
 	JdbcType getJdbcType();
 
 	String getColumnName();
-
+	
 	boolean isCompositeId();
 	
 	Class<? extends TypeHandler<?>> getSpecifiedTypeHandler();

@@ -30,7 +30,6 @@ import org.apache.ibatis.session.Configuration;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.mapping.Association;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mybatis.mapping.MybatisEmbeddedAssociation;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
@@ -125,17 +124,17 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 				MybatisPersistentProperty property = persistentEntity.getPersistentProperty(
 						part.getProperty().getSegment());
 				if (null == property) {
-					throw new MybatisQueryException("can not find property: " + part.getProperty().getSegment()
-							+ " from entity: " + persistentEntity.getName());
+					throw new MybatisQueryException("can not find property: " + part.getProperty().getSegment() + " from entity: " + persistentEntity.getName());
 				}
 				if (!property.isEntity()) {
 					columnName = quota(persistentEntity.getEntityName()) + "." + dialect.wrapColumnName(property.getColumnName());
 				} else {
 					if (property.isAssociation()) {
-						 Association<MybatisPersistentProperty> ass = property.getAssociation();
-						 if (ass instanceof MybatisEmbeddedAssociation) {
-	                            columnName = quota(persistentEntity.getEntityName()) + "." + dialect.wrapColumnName(ass.getInverse().getColumnName());
-	                     }
+					     MybatisEmbeddedAssociation association = (MybatisEmbeddedAssociation) property.getAssociation();
+		                 MybatisPersistentEntity<?> obversePersistentEntity = association.getObversePersistentEntity();
+		                 String peopertyName = part.getProperty().next().getSegment();
+		                 MybatisPersistentProperty subProperty = obversePersistentEntity.getPersistentProperty(peopertyName);
+	                     columnName = quota(persistentEntity.getEntityName()) + "." + dialect.wrapColumnName(subProperty.getColumnName());
 					}
 				}
 
