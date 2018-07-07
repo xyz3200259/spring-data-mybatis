@@ -20,6 +20,7 @@ package org.springframework.data.mybatis.repository.support;
 
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,11 @@ import javax.persistence.GeneratedValue;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.SimpleTypeConverter;
 import org.springframework.beans.TypeConverter;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.ExampleMatcher.StringMatcher;
@@ -37,14 +43,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mapping.AssociationHandler;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mybatis.id.IdentityGenerator;
 import org.springframework.data.mybatis.id.IdentityGeneratorFactory;
 import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
 import org.springframework.data.mybatis.repository.domain.ExampleInfo;
+import org.springframework.data.mybatis.utils.ReflectionUtils;
 import org.springframework.data.support.ExampleMatcherAccessor;
 import org.springframework.data.util.DirectFieldAccessFallbackBeanWrapper;
-import org.springframework.data.util.ReflectionUtils;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.Assert;
 
@@ -64,22 +71,25 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 
 	private static final String STATEMENT_UPDATE_IGNORE_NULL = "_updateIgnoreNull";
 
-	private static final String STATEMENT_GET_BY_ID = "_getById";
+	private static final String STATEMENT_FIND_BY_ID = "_findById";
 
 	private static final String STATEMENT_DELETE_BY_ID = "_deleteById";
 
-	private TypeConverter idConverter = new SimpleTypeConverter();
+	private TypeConverter simpleConverter = new SimpleTypeConverter();
 
 	private final MybatisEntityInformation<T, ID> entityInformation;
 
 	private IdentityGeneratorFactory<ID, T> identityGeneratorFactory;
 
+	private AuditorAware<?> auditorAware;
+
 	public SimpleMybatisRepository(MybatisEntityInformation<T, ID> entityInformation,
-			SqlSessionTemplate sqlSessionTemplate,
-			IdentityGeneratorFactory<ID, T> identityGeneratorFactory) {
+			SqlSessionTemplate sqlSessionTemplate, IdentityGeneratorFactory<ID, T> identityGeneratorFactory,
+			AuditorAware<?> auditorAware) {
 		super(sqlSessionTemplate);
 		this.entityInformation = entityInformation;
 		this.identityGeneratorFactory = identityGeneratorFactory;
+		this.auditorAware = auditorAware;
 	}
 
 	@Override
@@ -89,12 +99,14 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 
 	@Override
 	public <S extends T> S insert(S entity) {
+		processAuditingMetadata(entity, true);
 		insert(STATEMENT_INSERT, entity);
 		return entity;
 	}
 
 	@Override
 	public <S extends T> S update(S entity) {
+		processAuditingMetadata(entity, false);
 		int row = update(STATEMENT_UPDATE, entity);
 		if (row == 0) {
 			throw new MybatisNoHintException("update effect 0 row, maybe version control lock occurred.");
@@ -104,6 +116,7 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 
 	@Override
 	public <S extends T> S updateIgnoreNull(S entity) {
+		processAuditingMetadata(entity, false);
 		int row = update(STATEMENT_UPDATE_IGNORE_NULL, entity);
 		if (row == 0) {
 			throw new MybatisNoHintException("update effect 0 row, maybe version control lock occurred.");
@@ -127,9 +140,16 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 										String.format("No suitable IdentityGenerator found for Entity %s Property %s",
 												entityInformation.getEntityName(), p.getName()));
 								ID id = generator.generate(p);
-								ReflectionUtils.setField(p.getField(), entity,
-										idConverter.convertIfNecessary(id, p.getActualType()));
+								org.springframework.data.util.ReflectionUtils.setField(p.getField(), entity,
+										simpleConverter.convertIfNecessary(id, p.getActualType()));
 							}
+						}
+					});
+
+			entityInformation.getPersistentEntity().doWithAssociations(
+					(AssociationHandler<MybatisPersistentProperty>) (association) -> {
+						if (association.getInverse().isIdProperty()) {
+							throw new UnsupportedOperationException("Do not support generate @EmbeddedId!");
 						}
 					});
 			insert(entity);
@@ -159,7 +179,7 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 	@Override
 	public Optional<T> findById(ID id) {
 		Assert.notNull(id, "id can not be null");
-		return Optional.ofNullable(selectOne(STATEMENT_GET_BY_ID, id));
+		return Optional.ofNullable(selectOne(STATEMENT_FIND_BY_ID, id));
 	}
 
 	@Override
@@ -287,6 +307,35 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 		deleteAll(entities);
 	}
 
+	private void processAuditingMetadata(T entity, boolean create) {
+		Object auditor = auditorAware != null ? auditorAware.getCurrentAuditor().orElse(null) : null;
+		if (create) {
+			MybatisPersistentProperty createDateProperty = entityInformation.getPersistentEntity().getPersistentProperty(
+					CreatedDate.class);
+			ReflectionUtils.setFieldIfNull(createDateProperty.getField(), entity,
+					simpleConverter.convertIfNecessary(new Date(), createDateProperty.getActualType()));
+			if (null != auditor) {
+				MybatisPersistentProperty creatorProperty = entityInformation.getPersistentEntity().getPersistentProperty(
+						CreatedBy.class);
+				ReflectionUtils.setFieldIfNull(creatorProperty.getField(), entity,
+						simpleConverter.convertIfNecessary(auditor, creatorProperty.getActualType()));
+			}
+		}
+		else {
+			MybatisPersistentProperty lastModifiedDate = entityInformation.getPersistentEntity().getPersistentProperty(
+					LastModifiedDate.class);
+			ReflectionUtils.setFieldIfNull(lastModifiedDate.getField(), entity,
+					simpleConverter.convertIfNecessary(new Date(), lastModifiedDate.getActualType()));
+
+			if (null != auditor) {
+				MybatisPersistentProperty lastModifiedBy = entityInformation.getPersistentEntity().getPersistentProperty(
+						LastModifiedBy.class);
+				ReflectionUtils.setFieldIfNull(lastModifiedBy.getField(), entity,
+						simpleConverter.convertIfNecessary(auditor, lastModifiedBy.getActualType()));
+			}
+		}
+	}
+
 	private <S extends T> Map<String, ExampleInfo> buildExample(Example<S> example) {
 		Map<String, ExampleInfo> theExample = new HashMap<>();
 		ExampleMatcher matcher = example.getMatcher();
@@ -345,5 +394,4 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 		});
 		return theExample;
 	}
-
 }

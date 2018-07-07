@@ -23,8 +23,11 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mapping.Association;
 import org.springframework.data.mapping.PersistentProperty;
+import org.springframework.data.mapping.SimpleAssociationHandler;
 import org.springframework.data.mapping.SimplePropertyHandler;
+import org.springframework.data.mybatis.mapping.MybatisEmbeddedAssociation;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
 import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
 import org.springframework.data.mybatis.repository.dialect.Dialect;
@@ -180,6 +183,27 @@ public class MybatisMapperGenerator {
                 builder.append(quota(persistentEntity.getEntityName()) + "." + dialect.wrapColumnName(mpp.getColumnName())).append(" as ").append(quota(pp.getName())).append(",");
             }
         });
+        
+        persistentEntity.doWithAssociations(new SimpleAssociationHandler() {
+            @Override
+            public void doWithAssociation(Association<? extends PersistentProperty<?>> ass) {
+                if ((ass instanceof MybatisEmbeddedAssociation)) {
+                    final MybatisEmbeddedAssociation association = (MybatisEmbeddedAssociation) ass;
+                    MybatisPersistentEntity<?> obversePersistentEntity = association.getObversePersistentEntity();
+                    if (null != obversePersistentEntity) {
+                        obversePersistentEntity.doWithProperties(new SimplePropertyHandler() {
+                            @Override
+                            public void doWithPersistentProperty(PersistentProperty<?> pp) {
+                                MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+                                builder.append(quota(persistentEntity.getEntityName()) + "." + dialect.wrapColumnName(property.getColumnName())).append(" as ").append(quota(association.getInverse().getName() + "." + property.getName())).append(",");
+                            }
+                        });
+                    }
+                    return;
+                }
+            }
+        });
+
 
         if (builder.length() > 0 && builder.charAt(builder.length() - 1) == ',') {
             builder.deleteCharAt(builder.length() - 1);

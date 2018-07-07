@@ -42,8 +42,7 @@ import org.springframework.util.StringUtils;
  * @author 7cat
  * @since 1.0
  */
-public class DefaultIdentityGeneratorFactory<ID extends Serializable, T>
-		implements IdentityGeneratorFactory<ID, T> {
+public class DefaultIdentityGeneratorFactory<ID extends Serializable, T> implements IdentityGeneratorFactory<ID, T> {
 
 	public static final String DEFAULT_STRING_TYPE_ID_GENERATOR = "uuid";
 
@@ -51,10 +50,11 @@ public class DefaultIdentityGeneratorFactory<ID extends Serializable, T>
 
 	private Map<String, IdentityGenerator<? extends Serializable>> autoGenerationTypeGeneratorMapping = new HashMap<>();
 
-	public DefaultIdentityGeneratorFactory(SqlSessionFactory sqlSessionFactory ,Dialect dialect) {
+	public DefaultIdentityGeneratorFactory(SqlSessionFactory sqlSessionFactory, Dialect dialect) {
 		IdentityGenerator<? extends Serializable> uuidGenerator = new UUIDGenerator();
 		autoGenerationTypeGeneratorMapping.put(DEFAULT_STRING_TYPE_ID_GENERATOR, uuidGenerator);
-		IdentityGenerator<? extends Serializable> sequenceTableGenerator = new TableGenerator(sqlSessionFactory.getConfiguration().getEnvironment().getDataSource(), dialect);
+		IdentityGenerator<? extends Serializable> sequenceTableGenerator = new TableGenerator(
+				sqlSessionFactory.getConfiguration().getEnvironment().getDataSource(), dialect);
 		autoGenerationTypeGeneratorMapping.put(DEFAULT_NUMERICAL_TYPE_GENERATOR, sequenceTableGenerator);
 	}
 

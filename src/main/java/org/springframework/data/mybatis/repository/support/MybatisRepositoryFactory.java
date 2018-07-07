@@ -21,6 +21,7 @@ package org.springframework.data.mybatis.repository.support;
 import java.util.Optional;
 
 import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.mybatis.id.IdentityGeneratorFactory;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.repository.dialect.Dialect;
@@ -51,15 +52,18 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
 
 	private IdentityGeneratorFactory<?, ?> identityGeneratorFactory;
 
+	private AuditorAware<?> auditorAware;
+
 	public MybatisRepositoryFactory(final MybatisMappingContext mappingContext,
 			final SqlSessionTemplate sessionTemplate, final Dialect dialect,
-			final IdentityGeneratorFactory<?, ?> identityGeneratorFactory) {
+			final IdentityGeneratorFactory<?, ?> identityGeneratorFactory, AuditorAware<?> auditorAware) {
 		Assert.notNull(sessionTemplate, "SqlSessionTemplate must not be null!");
 		Assert.notNull(dialect, "Dialect must not be null!");
 		this.mappingContext = mappingContext;
 		this.sessionTemplate = sessionTemplate;
 		this.dialect = dialect;
 		this.identityGeneratorFactory = identityGeneratorFactory;
+		this.auditorAware = auditorAware;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -77,7 +81,7 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
 				information.getDomainType()).generate();
 
 		return getTargetRepositoryViaReflection(information, getEntityInformation(information.getDomainType()),
-				sessionTemplate, identityGeneratorFactory);
+				sessionTemplate, identityGeneratorFactory, auditorAware);
 
 	}
 

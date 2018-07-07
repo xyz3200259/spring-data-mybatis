@@ -25,6 +25,7 @@ import javax.sql.DataSource;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.mybatis.repository.config.EnableMybatisRepositories;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
@@ -55,6 +56,11 @@ public class TestConfig  {
         return factoryBean;
     }
 
+    @Bean
+    public AuditorAware<String> auditorAware(){
+    	return new DefaultAduitAware();
+    }
+    
     @Bean
     public PlatformTransactionManager transactionManager(DataSource dataSource) {
         return new DataSourceTransactionManager(dataSource);

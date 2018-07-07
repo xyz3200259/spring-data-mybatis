@@ -30,7 +30,9 @@ import org.apache.ibatis.session.Configuration;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.mapping.Association;
 import org.springframework.data.mapping.MappingException;
+import org.springframework.data.mybatis.mapping.MybatisEmbeddedAssociation;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
 import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
@@ -127,8 +129,14 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 							+ " from entity: " + persistentEntity.getName());
 				}
 				if (!property.isEntity()) {
-					columnName = quota(persistentEntity.getEntityName()) + "."
-							+ dialect.wrapColumnName(property.getColumnName());
+					columnName = quota(persistentEntity.getEntityName()) + "." + dialect.wrapColumnName(property.getColumnName());
+				} else {
+					if (property.isAssociation()) {
+						 Association<MybatisPersistentProperty> ass = property.getAssociation();
+						 if (ass instanceof MybatisEmbeddedAssociation) {
+	                            columnName = quota(persistentEntity.getEntityName()) + "." + dialect.wrapColumnName(ass.getInverse().getColumnName());
+	                     }
+					}
 				}
 
 				if (null == columnName) {

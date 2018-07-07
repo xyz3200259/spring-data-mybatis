@@ -21,6 +21,8 @@ package org.springframework.data.mybatis.repository.support;
 import java.io.Serializable;
 
 import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.mybatis.id.IdentityGeneratorFactory;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.repository.dialect.Dialect;
@@ -37,6 +39,9 @@ import org.springframework.util.Assert;
 public class MybatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extends Serializable>
 		extends TransactionalRepositoryFactoryBeanSupport<T, S, ID> {
 
+	@Autowired(required=false)
+	private AuditorAware<?> auditorAware;
+	
 	private SqlSessionTemplate sqlSessionTemplate;
 
 	private Dialect dialect;
@@ -71,7 +76,7 @@ public class MybatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID ext
 
 	@Override
 	protected RepositoryFactorySupport doCreateRepositoryFactory() {
-		return new MybatisRepositoryFactory(mappingContext, sqlSessionTemplate, dialect, identityGeneratorFactory);
+		return new MybatisRepositoryFactory(mappingContext, sqlSessionTemplate, dialect, identityGeneratorFactory, auditorAware);
 	}
 
 	public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
@@ -84,5 +89,9 @@ public class MybatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID ext
 
 	public void setIdentityGeneratorFactory(IdentityGeneratorFactory<ID, T> identityGeneratorFactory) {
 		this.identityGeneratorFactory = identityGeneratorFactory;
+	}
+
+	public void setAuditorAware(AuditorAware<?> auditorAware) {
+		this.auditorAware = auditorAware;
 	}
 }

@@ -174,5 +174,8 @@ public interface UserRepository extends MybatisRepository<User, String> {
 
 	//STARTING_WITH StartsWith
 	List<User> findByLastNameStartsWith(String name);
+	
+	//@Embedded property
+	Stream<User> findByAddress_streetNoStartsWith(String streetNo);
 
 }

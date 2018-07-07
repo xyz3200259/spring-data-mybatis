@@ -26,10 +26,16 @@ package org.springframework.data.mybatis.domain.sample;
 import java.util.Date;
 
 import javax.persistence.Column;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
+
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
 
 /**
  * @author 7cat
@@ -53,7 +59,17 @@ public class User {
 
 	private int active;
 
+	@CreatedDate
 	private Date createdAt;
+
+	@LastModifiedBy
+	private String updator;
+
+	@LastModifiedDate
+	private Date updatedAt;
+
+	@CreatedBy
+	private String creator;
 
 	private String emailAddress;
 
@@ -65,11 +81,8 @@ public class User {
 
 	private String country;
 
-	private String city;
-
-	private String streetName;
-
-	private String streetNo;
+	@Embedded
+	private Address address;
 
 	public String getId() {
 		return id;
@@ -159,28 +172,35 @@ public class User {
 		this.country = country;
 	}
 
-	public String getCity() {
-		return city;
+	public Address getAddress() {
+		return address;
 	}
 
-	public void setCity(String city) {
-		this.city = city;
+	public void setAddress(Address address) {
+		this.address = address;
 	}
 
-	public String getStreetName() {
-		return streetName;
+	public String getUpdator() {
+		return updator;
 	}
 
-	public void setStreetName(String streetName) {
-		this.streetName = streetName;
+	public void setUpdator(String updator) {
+		this.updator = updator;
 	}
 
-	public String getStreetNo() {
-		return streetNo;
+	public Date getUpdatedAt() {
+		return updatedAt;
 	}
 
-	public void setStreetNo(String streetNo) {
-		this.streetNo = streetNo;
+	public void setUpdatedAt(Date updatedAt) {
+		this.updatedAt = updatedAt;
 	}
 
+	public String getCreator() {
+		return creator;
+	}
+
+	public void setCreator(String creator) {
+		this.creator = creator;
+	}
 }

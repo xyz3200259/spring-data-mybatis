@@ -18,10 +18,17 @@
 
 package org.springframework.data.mybatis.mapping;
 
+import java.lang.annotation.Annotation;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import javax.persistence.Column;
+import javax.persistence.Embedded;
+import javax.persistence.EmbeddedId;
 import javax.persistence.Id;
 import javax.persistence.Transient;
 
@@ -44,7 +51,7 @@ import static org.apache.ibatis.type.JdbcType.*;
 public class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<MybatisPersistentProperty>
 		implements MybatisPersistentProperty {
 
-	private final Lazy<Boolean> isId = Lazy.of(() -> isAnnotationPresent(Id.class));
+	private static final Collection<Class<? extends Annotation>> ID_ANNOTATIONS;
 
 	private static Map<Class<?>, JdbcType> javaTypesMappedToJdbcTypes = new HashMap<Class<?>, JdbcType>();
 
@@ -63,39 +70,36 @@ public class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProp
 		javaTypesMappedToJdbcTypes.put(java.sql.Date.class, DATE);
 		javaTypesMappedToJdbcTypes.put(java.sql.Time.class, TIME);
 		javaTypesMappedToJdbcTypes.put(java.sql.Timestamp.class, TIMESTAMP);
-
 		javaTypesMappedToJdbcTypes.put(Boolean.class, BIT);
 		javaTypesMappedToJdbcTypes.put(Integer.class, INTEGER);
 		javaTypesMappedToJdbcTypes.put(Long.class, BIGINT);
 		javaTypesMappedToJdbcTypes.put(Float.class, REAL);
 		javaTypesMappedToJdbcTypes.put(Double.class, DOUBLE);
 
+		Set<Class<? extends Annotation>> annotations = new HashSet<Class<? extends Annotation>>();
+		annotations.add(Id.class);
+		annotations.add(EmbeddedId.class);
+		ID_ANNOTATIONS = Collections.unmodifiableSet(annotations);
 	}
+
+	private final Lazy<Boolean> isIdProperty;
 
 	public MybatisPersistentPropertyImpl(Property property, PersistentEntity<?, MybatisPersistentProperty> owner,
 			SimpleTypeHolder simpleTypeHolder) {
 		super(property, owner, simpleTypeHolder);
+		this.isIdProperty = Lazy.of(() -> ID_ANNOTATIONS.stream().anyMatch(it -> isAnnotationPresent(it)));
 	}
 
 	@Override
 	public boolean isIdProperty() {
-		boolean isIdProperty = super.isIdProperty();
-		if (isIdProperty) {
-			return true;
-		}
-		else {
-			return isId.get();
-		}
+		return isIdProperty.get();
 	}
 
-	@Override
-	public boolean isAssociation() {
-		return false;
-	}
-
-	// association not supported
 	@Override
 	protected Association<MybatisPersistentProperty> createAssociation() {
+		if (null != findAnnotation(Embedded.class)|| null!= findAnnotation(EmbeddedId.class)) {
+			return new MybatisEmbeddedAssociation(this, null);
+		}
 		return null;
 	}
 
@@ -168,17 +172,23 @@ public class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProp
 		}
 		return null;
 	}
+	
+	@Override
+	public boolean isAssociation() {
+		return (null != findAnnotation(Embedded.class) || null != findAnnotation(EmbeddedId.class));
+	}
 
 	@Override
 	public boolean isCompositeId() {
 		return isIdProperty() && isEntity();
 	}
-	
+
 	@Override
 	public boolean isTransient() {
-		if(isAnnotationPresent(Transient.class)) {
+		if (isAnnotationPresent(Transient.class)) {
 			return true;
-		}else {
+		}
+		else {
 			return super.isTransient();
 		}
 	}
