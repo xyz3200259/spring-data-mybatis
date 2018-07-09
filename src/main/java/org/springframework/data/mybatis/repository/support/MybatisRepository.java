@@ -37,6 +37,8 @@ public interface MybatisRepository<T, ID extends Serializable>
 		extends PagingAndSortingRepository<T, ID>, QueryByExampleExecutor<T> {
 
 	<S extends T> S insert(S entity);
+	
+	<S extends T> List<S> insertAll(Iterable<S> entities);
 
 	<S extends T> S update(S entity);
 

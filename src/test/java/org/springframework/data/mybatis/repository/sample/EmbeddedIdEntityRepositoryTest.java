@@ -65,6 +65,14 @@ public class EmbeddedIdEntityRepositoryTest {
 		assertEquals("field2", embeddedIdEntityRepository.findById(entity.getEmbeddedKey()).get().getField1());
 	}
 
+	@Test
+	public void testDeleteByExample() {
+		EmbeddedIdEntity entity = build("key1", "key2", "field1");
+		embeddedIdEntityRepository.insert(entity);
+		embeddedIdEntityRepository.deleteByEmbeddedKey_id1("key1");
+		assertFalse(embeddedIdEntityRepository.findById(entity.getEmbeddedKey()).isPresent());
+	}
+	
 	private EmbeddedIdEntity build(String key1, String key2, String field1) {
 		EmbeddedIdEntity entity = new EmbeddedIdEntity();
 		entity.setField1(field1);

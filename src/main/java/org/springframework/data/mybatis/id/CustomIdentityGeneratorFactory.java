@@ -27,7 +27,6 @@ import java.io.Serializable;
 
 /**
  * @author 7cat
- * @since 1.0
  */
 public interface CustomIdentityGeneratorFactory<ID extends Serializable, T> extends IdentityGeneratorFactory<ID, T> {
 }

@@ -20,54 +20,26 @@ package org.springframework.data.mybatis.annotations;
 
 import org.springframework.data.annotation.QueryAnnotation;
 
-import static org.springframework.data.mybatis.annotations.Native.Operation.*;
+import static org.springframework.data.mybatis.annotations.Statement.Type.*;
 
 import java.lang.annotation.*;
 
 /**
- * Annotated to named operation.
- *
- * @author Jarvis Song
+ * @author 7cat
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
+@Target({ ElementType.METHOD, ElementType.ANNOTATION_TYPE })
 @QueryAnnotation
 @Documented
-public @interface Native {
+public @interface Statement {
 
-    /**
-     * statement name.
-     *
-     * @return
-     */
-    String value() default "";
+	String value() default "";
 
-    String namespace() default "";
+	String namespace() default "";
 
-    String sql() default "";
+	Type type() default AUTO;
 
-    Class<?> returnType() default Unspecified.class;
-
-    Class<?> parameterType() default Unspecified.class;
-
-    boolean basic() default true;
-
-    Operation operation() default UNKNOW;
-
-    class Unspecified {
-    }
-
-    enum Operation {
-        INSERT,
-        UPDATE,
-        SELECT_ONE,
-        SELECT_LIST,
-        DELETE,
-        PAGE,
-        SLICE,
-        STREAM,
-        UNKNOW
-    }
+	enum Type {
+		INSERT, UPDATE, SELECT_ONE, SELECT_LIST, DELETE, PAGE, SLICE, STREAM, AUTO
+	}
 }
-
-

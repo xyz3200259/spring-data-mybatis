@@ -19,7 +19,7 @@
 package org.springframework.data.mybatis.repository.query;
 
 import org.mybatis.spring.SqlSessionTemplate;
-import org.springframework.data.mybatis.annotations.Native;
+import org.springframework.data.mybatis.annotations.Statement;
 import org.springframework.data.repository.query.EvaluationContextProvider;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 
@@ -31,7 +31,7 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 public class SimpleMybatisQuery extends AbstractMybatisQuery {
 
 
-    public SimpleMybatisQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method, Native query, EvaluationContextProvider evaluationContextProvider, SpelExpressionParser parser) {
+    public SimpleMybatisQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method, Statement query, EvaluationContextProvider evaluationContextProvider, SpelExpressionParser parser) {
         super(sqlSessionTemplate, method);
     }
 }

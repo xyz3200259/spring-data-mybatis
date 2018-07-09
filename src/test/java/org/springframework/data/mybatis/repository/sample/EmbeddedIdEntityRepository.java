@@ -24,4 +24,5 @@ import org.springframework.data.mybatis.repository.support.MybatisRepository;
 
 public interface EmbeddedIdEntityRepository extends MybatisRepository<EmbeddedIdEntity, EmbeddedKey> { 
 	
+	void deleteByEmbeddedKey_id1(String id1);
 }

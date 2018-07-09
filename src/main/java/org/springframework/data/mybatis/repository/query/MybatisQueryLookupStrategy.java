@@ -88,14 +88,10 @@ public final class MybatisQueryLookupStrategy {
         @Override
         protected RepositoryQuery resolveQuery(MybatisQueryMethod method, NamedQueries namedQueries) {
 
-            RepositoryQuery query = MybatisQueryFactory.INSTANCE.fromQueryAnnotation(sqlSessionTemplate, method, evaluationContextProvider);
+            RepositoryQuery query = MybatisQueryFactory.INSTANCE.fromStatementAnnotation(sqlSessionTemplate, method, evaluationContextProvider);
             if (null != query) {
                 return query;
             }
-//            String name = method.getNamedQueryName();
-//            if (namedQueries.hasQuery(name)) {
-//                return MybatisQueryFactory.INSTANCE.fromMethodWithQueryString(sqlSessionTemplate, method, namedQueries.getQuery(name), evaluationContextProvider);
-//            }
             throw new IllegalStateException(
                     String.format("Did neither find a NamedQuery nor an annotated query for method %s!", method));
         }

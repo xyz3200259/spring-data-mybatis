@@ -21,7 +21,7 @@ package org.springframework.data.mybatis.repository.query;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.mybatis.annotations.Native;
+import org.springframework.data.mybatis.annotations.Statement;
 import org.springframework.data.repository.query.EvaluationContextProvider;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 
@@ -38,22 +38,15 @@ public enum MybatisQueryFactory {
 
 	private static final SpelExpressionParser PARSER = new SpelExpressionParser();
 
-	AbstractMybatisQuery fromQueryAnnotation(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method,
+	AbstractMybatisQuery fromStatementAnnotation(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method,
 			EvaluationContextProvider evaluationContextProvider) {
 		LOG.debug("Looking up query for method {}", method.getName());
 
-		Native query = method.getNativeAnnotation();
-		if (null == query) {
+		Statement statement = method.getStatementAnnotation();
+		if (null == statement) {
 			return null;
 		}
 
-		return fromMethodWithQueryString(sqlSessionTemplate, method, method.getNativeAnnotation(),
-				evaluationContextProvider);
-	}
-
-	AbstractMybatisQuery fromMethodWithQueryString(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method,
-			Native query, EvaluationContextProvider evaluationContextProvider) {
-
-		return new SimpleMybatisQuery(sqlSessionTemplate, method, query, evaluationContextProvider, PARSER);
+		return new SimpleMybatisQuery(sqlSessionTemplate, method, statement, evaluationContextProvider, PARSER);
 	}
 }

@@ -31,8 +31,8 @@ import javax.persistence.TupleElement;
 
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.mybatis.annotations.Native;
-import org.springframework.data.mybatis.annotations.Native.Operation;
+import org.springframework.data.mybatis.annotations.Statement;
+import org.springframework.data.mybatis.annotations.Statement.Type;
 import org.springframework.data.mybatis.repository.query.MybatisQueryExecution.CollectionExecution;
 import org.springframework.data.mybatis.repository.query.MybatisQueryExecution.DeleteExecution;
 import org.springframework.data.mybatis.repository.query.MybatisQueryExecution.ExistsExecution;
@@ -51,7 +51,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import static org.springframework.data.mybatis.annotations.Native.Operation.*;
+import static org.springframework.data.mybatis.annotations.Statement.Type.*;
 
 /**
  * abstract mybatis query.
@@ -89,28 +89,12 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 		return withDynamicProjection.processResult(result, new TupleConverter(withDynamicProjection.getReturnedType()));
 	}
 
-	protected Class<?> getStatementParameterType() {
-		Native annotation = method.getNativeAnnotation();
-		if (null == annotation || null == annotation.parameterType()) {
-			return Native.Unspecified.class;
-		}
-		return annotation.parameterType();
-	}
-
-	protected Class<?> getStatementReturnType() {
-		Native annotation = method.getNativeAnnotation();
-		if (null == annotation || null == annotation.returnType()) {
-			return Native.Unspecified.class;
-		}
-		return annotation.returnType();
-	}
-
-	protected Operation getOperation() {
-		Native annotation = method.getNativeAnnotation();
+	protected Type getStatementType() {
+		Statement annotation = method.getStatementAnnotation();
 		if (null == annotation) {
 			return null;
 		}
-		return annotation.operation();
+		return annotation.type();
 	}
 
 	protected String getStatementId() {
@@ -126,7 +110,7 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 	}
 
 	protected String getNamespace() {
-		Native annotation = method.getNativeAnnotation();
+		Statement annotation = method.getStatementAnnotation();
 		if (null == annotation || StringUtils.isEmpty(annotation.namespace())) {
 			return method.getEntityInformation().getJavaType().getName();
 		}
@@ -139,7 +123,7 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 	}
 
 	protected String getStatementName() {
-		Native annotation = method.getNativeAnnotation();
+		Statement annotation = method.getStatementAnnotation();
 		if (null == annotation || StringUtils.isEmpty(annotation.value())) {
 			return method.getName();
 		}
@@ -151,8 +135,8 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 	}
 
 	protected MybatisQueryExecution getExecution() {
-		Operation operation = getOperation();
-		if (null != operation && operation != UNKNOW) {
+		Type operation = getStatementType();
+		if (null != operation && operation != AUTO) {
 			switch (operation) {
 				case INSERT:
 					return new InsertExecution();
@@ -170,7 +154,7 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 					return new StreamExecution();
 				case SLICE:
 					return new SlicedExecution();
-				case UNKNOW:
+				case AUTO:
 					break;
 			}
 		}

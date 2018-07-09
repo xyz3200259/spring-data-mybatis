@@ -25,13 +25,21 @@ package org.springframework.data.mybatis.id;
 
 import java.io.Serializable;
 
+import javax.persistence.GeneratedValue;
+
 import org.springframework.data.mapping.PersistentProperty;
 
 /**
+ * A generator for use with ANSI-SQL IDENTITY columns used as the primary key.
+ * The IdentityGenerator for autoincrement/identity key generation.
+ *
  * @author 7cat
- * @since 1.0
  */
-public interface IdentityGenerator <ID extends Serializable> {
+public interface IdentityGenerator<ID extends Serializable> {
 
-	public ID generate(PersistentProperty<?> persistentProperty);
+	/**
+	 * @param persistentProperty Property annotated with {@link GeneratedValue}     
+	 * @return generated identity
+	 */
+	ID generate(PersistentProperty<?> persistentProperty);
 }

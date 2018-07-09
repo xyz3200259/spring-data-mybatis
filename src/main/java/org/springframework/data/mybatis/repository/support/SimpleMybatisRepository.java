@@ -410,4 +410,15 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 		params.put("_example", buildExample(example));
 		return super.delete(STATEMENT_DELETE_BY_EXAMPLE, params);
 	}
+
+	@Override
+	public <S extends T> List<S> insertAll(Iterable<S> entities) {
+		if (null == entities) {
+			return Collections.emptyList();
+		}
+		for (S entity : entities) {
+			insert(entity);
+		}
+		return (List<S>) entities;
+	}
 }

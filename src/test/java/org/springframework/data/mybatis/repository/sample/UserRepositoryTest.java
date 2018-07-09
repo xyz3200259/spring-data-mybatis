@@ -78,7 +78,7 @@ public class UserRepositoryTest {
 
 	@Test
 	public void testFindByLastNameAndFirstName() {
-		repository.findByLastNameAndFirstName("lastname", "firstname");
+		repository.findByLastNameAndFirstName("lastname", null);
 	}
 
 	public void testFindByLastNameOrFirstName() {
