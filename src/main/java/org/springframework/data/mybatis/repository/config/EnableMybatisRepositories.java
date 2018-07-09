@@ -84,6 +84,14 @@ public @interface EnableMybatisRepositories {
     String repositoryImplementationPostfix() default "Impl";
 
     /**
+     * Configures the location of where to find the Spring Data named queries properties file. Will default to
+     * {@code META-INF/mybatis-named-queries.properties}.
+     *
+     * @return namedQueriesLocation
+     */
+    String namedQueriesLocation() default "";
+
+    /**
      * Returns the key of the {@link QueryLookupStrategy} to be used for lookup queries for query methods. Defaults to
      * {@link org.springframework.data.repository.query.QueryLookupStrategy.Key#CREATE_IF_NOT_FOUND}.
      *
