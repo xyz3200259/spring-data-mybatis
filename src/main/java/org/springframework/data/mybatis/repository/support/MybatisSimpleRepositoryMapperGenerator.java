@@ -310,6 +310,9 @@ public class MybatisSimpleRepositoryMapperGenerator {
 
 	private void buildByIdCaluse(final StringBuilder builder) {
 		final MybatisPersistentProperty idProperty = persistentEntity.getIdProperty();
+		if(null == idProperty) {
+			throw new MappingException("Could not find @Id/@EmbeddedId for domain: " + domainClass + " .");
+		}
 		if (idProperty.isCompositeId()) {
 			MybatisPersistentEntityImpl<?> idEntity = context.getPersistentEntity(idProperty.getActualType());
 			if (null != idEntity) {
