@@ -60,8 +60,6 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 
 	private static final String MAPPER_END = "</mapper>";
 
-	private final Dialect dialect;
-
 	private final EntityMetadata<?> entityInformation;
 
 	private final Class<?> domainClass;
@@ -78,8 +76,7 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 
 	protected PartTreeMybatisQuery(MybatisMappingContext context, SqlSessionTemplate sqlSessionTemplate,
 			Dialect dialect, MybatisQueryMethod method) {
-		super(sqlSessionTemplate, method);
-		this.dialect = dialect;
+		super(sqlSessionTemplate, method, dialect);
 		this.entityInformation = method.getEntityInformation();
 		this.domainClass = this.entityInformation.getJavaType();
 		this.tree = new PartTree(method.getName(), domainClass);
@@ -216,7 +213,7 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 		StringBuilder condition = new StringBuilder();
 		condition.append(buildQueryCondition());
 		builder.append("<select id=\"" + statementName + "\" lang=\"XML\" resultMap=\"ResultMap\">");
-		builder.append(dialect.getLimitHandler().processSql(true, generator.buildSelectColumns(),
+		builder.append(dialect.getLimitHandler().processSql(generator.buildSelectColumns(),
 				" from " + generator.buildFrom(), condition.toString(), generator.buildSorts(tree.getSort())));
 		builder.append("</select>");
 

@@ -22,18 +22,13 @@ package org.springframework.data.mybatis.repository.dialect.pagination;
  * @author Jarvis Song
  */
 public abstract class AbstractLimitHandler implements LimitHandler {
+
 	public boolean supportsLimit() {
 		return false;
 	}
 
 	public boolean supportsLimitOffset() {
 		return supportsLimit();
-	}
-
-	public String processSql(String columns, String from,
-			String condition, String sorts) {
-		throw new UnsupportedOperationException(
-				"Paged queries not supported by " + getClass().getName());
 	}
 
 	public boolean bindLimitParametersInReverseOrder() {

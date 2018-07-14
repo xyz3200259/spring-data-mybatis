@@ -341,8 +341,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
 		example.append("<include refid=\"_EXAMPLE\" />");
 		example.append("</trim>");
 		example.append("</if>");
-		builder.append(dialect.getLimitHandler().processSql(true, generator.buildSelectColumns(),
-				" from " + generator.buildFrom(), example.toString(), generator.buildSorts(null)));
+		builder.append(dialect.getLimitHandler().processSql(generator.buildSelectColumns(), " from " + generator.buildFrom(), example.toString(), generator.buildSorts(null)));
 		builder.append("</select>");
 	}
 

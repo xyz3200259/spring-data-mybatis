@@ -34,11 +34,13 @@ public class DB2Dialect extends Dialect {
 	private static final AbstractLimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {
 
 		@Override
-		public String processSql(boolean hasOffset, String columns, String from, String condition, String sorts) {
+		public String processSql(String columns, String from, String condition, String sorts) {
 			final StringBuilder pagingSelect = new StringBuilder();
-			pagingSelect.append("select * from ( select inner2_.*, rownumber() over(order by order of inner2_) as rownumber_ from ( ");
+			pagingSelect.append(
+					"select * from ( select inner2_.*, rownumber() over(order by order of inner2_) as rownumber_ from ( ");
 			pagingSelect.append("select " + columns + from + condition + sorts);
-			pagingSelect.append(" ) as inner2_ )  where rownumber_ <![CDATA[<=]]> #{offsetEnd} and rownumber_ <![CDATA[>]]> #{offset}");
+			pagingSelect.append(
+					" ) as inner2_ )  where rownumber_ <![CDATA[<=]]> #{offsetEnd} and rownumber_ <![CDATA[>]]> #{offset}");
 			return pagingSelect.toString();
 		}
 
@@ -50,6 +52,16 @@ public class DB2Dialect extends Dialect {
 		@Override
 		public boolean useMaxForLimit() {
 			return true;
+		}
+
+		@Override
+		public String processSql(String sql, int pageSize, long offset, long offsetEnd) {
+			final StringBuilder pagingSelect = new StringBuilder();
+			pagingSelect.append(
+					"select * from ( select inner2_.*, rownumber() over(order by order of inner2_) as rownumber_ from ( ");
+			pagingSelect.append(sql);
+			pagingSelect.append(" ) as inner2_ )  where rownumber_ <= " + offsetEnd + "   and rownumber_ > " + offset);
+			return pagingSelect.toString();
 		}
 	};
 

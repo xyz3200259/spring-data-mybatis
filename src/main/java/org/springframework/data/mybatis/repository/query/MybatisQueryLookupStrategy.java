@@ -79,16 +79,18 @@ public final class MybatisQueryLookupStrategy {
     private static class DeclaredQueryLookupStrategy extends AbstractQueryLookupStrategy {
         private final SqlSessionTemplate        sqlSessionTemplate;
         private final EvaluationContextProvider evaluationContextProvider;
+        private final Dialect dialect;
 
-        private DeclaredQueryLookupStrategy(SqlSessionTemplate sqlSessionTemplate, EvaluationContextProvider evaluationContextProvider) {
+        private DeclaredQueryLookupStrategy(SqlSessionTemplate sqlSessionTemplate, EvaluationContextProvider evaluationContextProvider, Dialect dialect) {
             this.sqlSessionTemplate = sqlSessionTemplate;
             this.evaluationContextProvider = evaluationContextProvider;
+            this.dialect = dialect;
         }
 
         @Override
         protected RepositoryQuery resolveQuery(MybatisQueryMethod method, NamedQueries namedQueries) {
 
-            RepositoryQuery query = MybatisQueryFactory.INSTANCE.fromStatementAnnotation(sqlSessionTemplate, method, evaluationContextProvider);
+            RepositoryQuery query = MybatisQueryFactory.INSTANCE.fromStatementAnnotation(sqlSessionTemplate, method, evaluationContextProvider, dialect);
             if (null != query) {
                 return query;
             }
@@ -130,11 +132,11 @@ public final class MybatisQueryLookupStrategy {
             case CREATE:
                 return new CreateQueryLookupStrategy(context, sqlSessionTemplate, dialect);
             case USE_DECLARED_QUERY:
-                return new DeclaredQueryLookupStrategy(sqlSessionTemplate, evaluationContextProvider);
+                return new DeclaredQueryLookupStrategy(sqlSessionTemplate, evaluationContextProvider,dialect);
             case CREATE_IF_NOT_FOUND:
                 return new CreateIfNotFoundQueryLookupStrategy(
                         new CreateQueryLookupStrategy(context, sqlSessionTemplate, dialect),
-                        new DeclaredQueryLookupStrategy(sqlSessionTemplate, evaluationContextProvider));
+                        new DeclaredQueryLookupStrategy(sqlSessionTemplate, evaluationContextProvider,dialect));
             default:
                 throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));
         }

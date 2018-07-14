@@ -28,56 +28,59 @@ import org.springframework.data.mybatis.repository.dialect.pagination.LimitHandl
  */
 public class OracleDialect extends Dialect {
 
-    private static final AbstractLimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {
-        @Override
-        public boolean supportsLimit() {
-            return true;
-        }
+	private static final AbstractLimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {
 
-        @Override
-        public boolean bindLimitParametersInReverseOrder() {
-            return true;
-        }
+		@Override
+		public boolean supportsLimit() {
+			return true;
+		}
 
+		@Override
+		public boolean bindLimitParametersInReverseOrder() {
+			return true;
+		}
 
-        @Override
-        public String processSql(boolean hasOffset, String columns, String from, String condition, String sorts) {
+		@Override
+		public String processSql(String columns, String from, String condition, String sorts) {
+			return processSql("select " + columns + from + condition + sorts);
+		}
 
-            final StringBuilder pagingSelect = new StringBuilder();
-            if (hasOffset) {
-                pagingSelect.append("select * from ( select row_.*, rownum rownum_ from ( ");
-            } else {
-                pagingSelect.append("select * from ( ");
-            }
-            pagingSelect.append("select " + columns + from + condition + sorts);
-            if (hasOffset) {
-                pagingSelect.append(" ) row_ where rownum <![CDATA[<=]]> #{offsetEnd}) where rownum_ <![CDATA[>]]> #{offset}");
-            } else {
-                pagingSelect.append(" ) where rownum <![CDATA[<=]]> #{offsetEnd}");
-            }
+		@Override
+		public String processSql(String sql, int pageSize, long offset, long offsetEnd) {
+			final StringBuilder pagingSelect = new StringBuilder();
+			pagingSelect.append("select * from ( select row_.*, rownum rownum_ from ( ");
+			pagingSelect.append(sql);
+			pagingSelect.append(" ) row_ where rownum  <=" + offsetEnd + ") where rownum_ > " + offset);
+			return pagingSelect.toString();
+		}
 
-            return pagingSelect.toString();
+		private String processSql(String sql) {
+			final StringBuilder pagingSelect = new StringBuilder();
+			pagingSelect.append("select * from ( select row_.*, rownum rownum_ from ( ");
+			pagingSelect.append(sql);
+			pagingSelect.append(
+					" ) row_ where rownum <![CDATA[<=]]> #{offsetEnd}) where rownum_ <![CDATA[>]]> #{offset}");
+			return pagingSelect.toString();
+		};
+	};
 
-        }
-    };
+	@Override
+	public LimitHandler getLimitHandler() {
+		return LIMIT_HANDLER;
+	}
 
-    @Override
-    public LimitHandler getLimitHandler() {
-        return LIMIT_HANDLER;
-    }
+	@Override
+	public char closeQuote() {
+		return '"';
+	}
 
-    @Override
-    public char closeQuote() {
-        return '"';
-    }
+	@Override
+	public char openQuote() {
+		return '"';
+	}
 
-    @Override
-    public char openQuote() {
-        return '"';
-    }
-
-    @Override
-    public boolean supportsDeleteAlias() {
-        return false;
-    }
+	@Override
+	public boolean supportsDeleteAlias() {
+		return false;
+	}
 }

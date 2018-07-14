@@ -22,6 +22,7 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.mybatis.annotations.Statement;
+import org.springframework.data.mybatis.repository.dialect.Dialect;
 import org.springframework.data.repository.query.EvaluationContextProvider;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 
@@ -39,7 +40,7 @@ public enum MybatisQueryFactory {
 	private static final SpelExpressionParser PARSER = new SpelExpressionParser();
 
 	AbstractMybatisQuery fromStatementAnnotation(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method,
-			EvaluationContextProvider evaluationContextProvider) {
+			EvaluationContextProvider evaluationContextProvider, Dialect dialect) {
 		LOG.debug("Looking up query for method {}", method.getName());
 
 		Statement statement = method.getStatementAnnotation();
@@ -47,6 +48,6 @@ public enum MybatisQueryFactory {
 			return null;
 		}
 
-		return new SimpleMybatisQuery(sqlSessionTemplate, method, statement, evaluationContextProvider, PARSER);
+		return new SimpleMybatisQuery(sqlSessionTemplate, method, statement, evaluationContextProvider, PARSER, dialect);
 	}
 }

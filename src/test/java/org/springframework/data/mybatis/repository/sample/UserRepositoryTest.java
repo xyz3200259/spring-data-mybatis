@@ -29,6 +29,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mybatis.config.sample.TestConfig;
 import org.springframework.data.mybatis.domain.sample.User;
 import org.springframework.test.context.ContextConfiguration;
@@ -63,6 +64,7 @@ public class UserRepositoryTest {
 		assertNotNull(user.getUpdator());
 	}
 	
+	
 	@Test
 	public void testDeleteByExample() {
 		User user = new User();
@@ -73,6 +75,13 @@ public class UserRepositoryTest {
 
 	@Test
 	public void testFindUseMapper() {
+		User user = new User();
+		user.setLastName("lastname");
+		repository.save(user);
+		User user1 = new User();
+		user1.setLastName("lastname");
+		repository.save(user1);
+		repository.findUseMapper("lastname", PageRequest.of(0, 1));
 		repository.findUseMapper("lastname");
 	}
 

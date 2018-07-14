@@ -22,8 +22,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mybatis.annotations.Statement;
-import org.springframework.data.mybatis.annotations.Statement.Type;
 import org.springframework.data.mybatis.domain.sample.User;
 import org.springframework.data.mybatis.repository.support.MybatisRepository;
 import org.springframework.data.repository.query.Param;
@@ -35,9 +36,12 @@ import org.springframework.data.repository.query.Param;
  */
 public interface UserRepository extends MybatisRepository<User, String> {
 
-	@Statement(type=Type.UPDATE)
+	@Statement
 	List<User> findUseMapper(@Param("lastname") String lastName);
 
+	@Statement
+	Page<User> findUseMapper(@Param("lastname") String lastName, Pageable pageable);
+	
 	// AND
 	Stream<User> findByLastNameAndFirstName(String lastName, String firstName);
 

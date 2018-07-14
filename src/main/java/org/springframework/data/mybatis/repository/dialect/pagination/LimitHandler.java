@@ -23,10 +23,11 @@ package org.springframework.data.mybatis.repository.dialect.pagination;
  */
 public interface LimitHandler {
 
-    boolean supportsLimit();
+	boolean supportsLimit();
 
-    boolean supportsLimitOffset();
+	boolean supportsLimitOffset();
 
-    String processSql(boolean hasFirstRow, String columns, String from, String condition, String sorts);
+	String processSql(String columns, String from, String condition, String sorts);
 
+	String processSql(String sql, int pageSize, long offset, long offsetEnd);
 }

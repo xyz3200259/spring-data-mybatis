@@ -28,47 +28,56 @@ import org.springframework.data.mybatis.repository.dialect.pagination.LimitHandl
  */
 public class PostgreSQLDialect extends Dialect {
 
+	private static final AbstractLimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {
 
-    private static final AbstractLimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {
-        @Override
-        public boolean supportsLimit() {
-            return true;
-        }
+		@Override
+		public boolean supportsLimit() {
+			return true;
+		}
 
-        @Override
-        public boolean bindLimitParametersInReverseOrder() {
-            return true;
-        }
+		@Override
+		public boolean bindLimitParametersInReverseOrder() {
+			return true;
+		}
 
+		@Override
+		public String processSql(String columns, String from, String condition, String sorts) {
+			String sql = "select " + columns + from + condition + sorts;
+			return processSql(sql);
+		}
 
-        @Override
-        public String processSql(boolean hasFirstRow, String columns, String from, String condition, String sorts) {
-            String sql = "select " + columns + from + condition + sorts;
-            return sql + (hasFirstRow ? " limit #{pageSize} offset #{offset}" : " limit #{pageSize}");
-        }
-    };
+		@Override
+		public String processSql(String sql, int pageSize, long offset , long offsetEnd) {
+			return sql + " limit " + pageSize + "offset " + offset;
+		}
 
-    public PostgreSQLDialect() {
-        super();
-    }
+		private String processSql(String sql) {
 
-    @Override
-    public String wrapTableName(String tableName) {
-        return "\"" + tableName + "\"";
-    }
+			return sql + " limit #{pageSize} offset #{offset}";
+		}
+	};
 
-    @Override
-    public String wrapColumnName(String columnName) {
-        return "\"" + columnName + "\"";
-    }
+	public PostgreSQLDialect() {
+		super();
+	}
 
-    @Override
-    public LimitHandler getLimitHandler() {
-        return LIMIT_HANDLER;
-    }
+	@Override
+	public String wrapTableName(String tableName) {
+		return "\"" + tableName + "\"";
+	}
 
-    @Override
-    public boolean supportsDeleteAlias() {
-        return false;
-    }
+	@Override
+	public String wrapColumnName(String columnName) {
+		return "\"" + columnName + "\"";
+	}
+
+	@Override
+	public LimitHandler getLimitHandler() {
+		return LIMIT_HANDLER;
+	}
+
+	@Override
+	public boolean supportsDeleteAlias() {
+		return false;
+	}
 }

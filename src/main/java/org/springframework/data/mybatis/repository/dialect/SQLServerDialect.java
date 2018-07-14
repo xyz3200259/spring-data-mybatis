@@ -28,83 +28,98 @@ import org.springframework.data.mybatis.repository.dialect.pagination.LimitHandl
  */
 public class SQLServerDialect extends Dialect {
 
-    private static final AbstractLimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {
-        @Override
-        public boolean supportsLimit() {
-            return true;
-        }
+	private static final AbstractLimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {
 
-        /**
-         *  * <pre>
-         * WITH query AS (
-         *   SELECT inner_query.*
-         *        , ROW_NUMBER() OVER (ORDER BY CURRENT_TIMESTAMP) as __hibernate_row_nr__
-         *     FROM ( original_query_with_top_if_order_by_present_and_all_aliased_columns ) inner_query
-         * )
-         * SELECT alias_list FROM query WHERE __hibernate_row_nr__ >= offset AND __hibernate_row_nr__ < offset + last
-         * </pre>
-         * @return
-         */
-        @Override
-        public boolean bindLimitParametersInReverseOrder() {
-            return true;
-        }
+		@Override
+		public boolean supportsLimit() {
+			return true;
+		}
 
-        @Override
-        public String processSql(boolean hasFirstRow, String columns, String from, String condition, String sorts) {
-            StringBuilder sql = new StringBuilder();
+		/**
+		 *  * <pre>
+		 * WITH query AS (
+		 *   SELECT inner_query.*
+		 *        , ROW_NUMBER() OVER (ORDER BY CURRENT_TIMESTAMP) as __hibernate_row_nr__
+		 *     FROM ( original_query_with_top_if_order_by_present_and_all_aliased_columns ) inner_query
+		 * )
+		 * SELECT alias_list FROM query WHERE __hibernate_row_nr__ >= offset AND __hibernate_row_nr__ < offset + last
+		 * </pre>
+		 * @return
+		 */
+		@Override
+		public boolean bindLimitParametersInReverseOrder() {
+			return true;
+		}
 
-            String[] cs = columns.split(",");
-            StringBuilder alias = new StringBuilder();
-            for (int i = 0; i < cs.length; i++) {
-                String c = cs[i];
-                String[] ass = c.split(" as ");
-                if (ass.length == 1) {
-                    alias.append(c).append(",");
-                } else {
-                    alias.append(ass[1]).append(",");
-                }
-            }
+		@Override
+		public String processSql(String columns, String from, String condition, String sorts) {
+			StringBuilder sql = new StringBuilder();
 
-            if (alias.length() > 0) {
-                alias.deleteCharAt(alias.length() - 1);
-            }
+			String[] cs = columns.split(",");
+			StringBuilder alias = new StringBuilder();
+			for (int i = 0; i < cs.length; i++) {
+				String c = cs[i];
+				String[] ass = c.split(" as ");
+				if (ass.length == 1) {
+					alias.append(c).append(",");
+				}
+				else {
+					alias.append(ass[1]).append(",");
+				}
+			}
 
+			if (alias.length() > 0) {
+				alias.deleteCharAt(alias.length() - 1);
+			}
 
-            sql.append("WITH query AS (SELECT inner_query.*, ROW_NUMBER() OVER (ORDER BY CURRENT_TIMESTAMP) as __mybatis_row_nr__ FROM ( select ");
-//            if (!hasFirstRow) {
-//                sql.append("top(#{pageSize}) ");
-//            }
-            sql.append(columns + from + condition + sorts);
-            sql.append(" ) inner_query ) ");
-            sql.append("select ").append(alias.toString());
-            sql.append(" from query where __mybatis_row_nr__ <![CDATA[>]]> #{offset} and __mybatis_row_nr__ <![CDATA[<=]]> #{offsetEnd}");
-            return sql.toString();
-        }
-    };
+			sql.append(
+					"WITH query AS (SELECT inner_query.*, ROW_NUMBER() OVER (ORDER BY CURRENT_TIMESTAMP) as __mybatis_row_nr__ FROM ( select ");
+			sql.append(columns + from + condition + sorts);
+			sql.append(" ) inner_query ) ");
+			sql.append("select ").append(alias.toString());
+			sql.append(
+					" from query where __mybatis_row_nr__ <![CDATA[>]]> #{offset} and __mybatis_row_nr__ <![CDATA[<=]]> #{offsetEnd}");
+			return sql.toString();
+		}
 
-    public SQLServerDialect() {
-        super();
+		@Override
+		public String processSql(String sql, int pageSize, long offset, long offsetEnd) {
+			StringBuilder wrapSql = new StringBuilder();
 
-    }
+			wrapSql.append(
+					"WITH query AS (SELECT inner_query.*, ROW_NUMBER() OVER (ORDER BY CURRENT_TIMESTAMP) as __mybatis_row_nr__ FROM ( select ");
+			wrapSql.append(sql);
+			wrapSql.append(" ) inner_query ) ");
+			wrapSql.append("select *");
+			wrapSql.append(
+					" from query where __mybatis_row_nr__  > " + offset + " and __mybatis_row_nr__  <= " + offsetEnd);
+			return sql.toString();
 
-    @Override
-    public LimitHandler getLimitHandler() {
-        return LIMIT_HANDLER;
-    }
+		}
+	};
 
-    @Override
-    public char closeQuote() {
-        return ']';
-    }
+	public SQLServerDialect() {
+		super();
 
-    @Override
-    public char openQuote() {
-        return '[';
-    }
+	}
 
-    @Override
-    public boolean supportsDeleteAlias() {
-        return true;
-    }
+	@Override
+	public LimitHandler getLimitHandler() {
+		return LIMIT_HANDLER;
+	}
+
+	@Override
+	public char closeQuote() {
+		return ']';
+	}
+
+	@Override
+	public char openQuote() {
+		return '[';
+	}
+
+	@Override
+	public boolean supportsDeleteAlias() {
+		return true;
+	}
 }

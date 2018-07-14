@@ -30,6 +30,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.io.Resource;
 import org.springframework.data.mapping.MappingException;
+import org.springframework.data.mybatis.repository.support.NativePagedCountPlugin;
+import org.springframework.data.mybatis.repository.support.NativePagedQueryPlugin;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -51,6 +53,8 @@ public class MybatisMappersRegister implements InitializingBean, ApplicationCont
         }
 
         Configuration configuration = sqlSessionFactory.getConfiguration();
+        configuration.addInterceptor(new NativePagedQueryPlugin());
+        configuration.addInterceptor(new NativePagedCountPlugin());
         for (String s : locations) {
             if (StringUtils.isEmpty(s)) {
                 continue;
@@ -78,11 +82,7 @@ public class MybatisMappersRegister implements InitializingBean, ApplicationCont
                     }
                 }
             }
-
-
         }
-
-
     }
 
     public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {

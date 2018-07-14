@@ -33,6 +33,7 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.mybatis.annotations.Statement;
 import org.springframework.data.mybatis.annotations.Statement.Type;
+import org.springframework.data.mybatis.repository.dialect.Dialect;
 import org.springframework.data.mybatis.repository.query.MybatisQueryExecution.CollectionExecution;
 import org.springframework.data.mybatis.repository.query.MybatisQueryExecution.DeleteExecution;
 import org.springframework.data.mybatis.repository.query.MybatisQueryExecution.ExistsExecution;
@@ -64,9 +65,12 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 
 	protected final MybatisQueryMethod method;
 
-	protected AbstractMybatisQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method) {
+	protected final Dialect dialect;
+	
+	protected AbstractMybatisQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method, Dialect dialect) {
 		this.sqlSessionTemplate = sqlSessionTemplate;
 		this.method = method;
+		this.dialect = dialect;
 	}
 
 	@Override
@@ -87,6 +91,10 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 		ResultProcessor withDynamicProjection = method.getResultProcessor().withDynamicProjection(accessor);
 
 		return withDynamicProjection.processResult(result, new TupleConverter(withDynamicProjection.getReturnedType()));
+	}
+	
+	protected boolean isNativeStatement() {
+		return null!= method.getStatementAnnotation();
 	}
 
 	protected Type getStatementType() {
@@ -117,6 +125,11 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 
 		return annotation.namespace();
 	}
+	
+	
+	protected Dialect getDialect() {
+		return dialect;
+	}
 
 	protected String getStatementId(String id) {
 		return getNamespace() + "." + id;
@@ -136,6 +149,7 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 
 	protected MybatisQueryExecution getExecution() {
 		Type operation = getStatementType();
+				
 		if (null != operation && operation != AUTO) {
 			switch (operation) {
 				case INSERT:
