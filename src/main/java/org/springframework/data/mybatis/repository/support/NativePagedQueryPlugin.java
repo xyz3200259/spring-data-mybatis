@@ -35,6 +35,7 @@ import org.apache.ibatis.plugin.Invocation;
 import org.apache.ibatis.plugin.Plugin;
 import org.apache.ibatis.plugin.Signature;
 import org.springframework.data.mybatis.repository.dialect.Dialect;
+import org.springframework.data.mybatis.repository.query.QueryUtils;
 import org.springframework.util.ReflectionUtils;
 
 @Intercepts({
@@ -94,7 +95,7 @@ public class NativePagedQueryPlugin implements Interceptor {
 	}
 
 	private String processPagedCountSql(String sql) {
-		return "SELECT COUNT(*) FROM ( " + sql + " )";
+		return QueryUtils.createCountQueryFor(sql);
 	}
 
 	private boolean isNativePagedQuery() {

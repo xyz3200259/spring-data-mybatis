@@ -227,22 +227,33 @@ public abstract class MybatisQueryExecution {
 
 			long total = calculateTotal(pager, result);
 			if (total < 0) {
-				if (query.isNativeStatement()) {
-					NativePagedQueryPlugin.startNativePagedCountQuery();
-					try {
-						query.getSqlSessionTemplate().clearCache();
-						total = query.getSqlSessionTemplate().selectOne(query.getStatementId(), parameter);
-					}
-					finally {
-						NativePagedQueryPlugin.endNativePagedCountQuery();
-					}
-				}
-				else {
+				if(isCountStatementIdExist(query)) {
 					total = query.getSqlSessionTemplate().selectOne(query.getCountStatementId(), parameter);
+				} else {
+					if (query.isNativeStatement()) {
+						NativePagedQueryPlugin.startNativePagedCountQuery();
+						try {
+							query.getSqlSessionTemplate().clearCache();
+							total = query.getSqlSessionTemplate().selectOne(query.getStatementId(), parameter);
+						}
+						finally {
+							NativePagedQueryPlugin.endNativePagedCountQuery();
+						}
+					}
 				}
 			}
 			return new PageImpl(result, pager, total);
 		}
+		
+		private boolean isCountStatementIdExist(AbstractMybatisQuery query) {
+			try {
+			query.getSqlSessionTemplate().getConfiguration().getMappedStatement(query.getCountStatementId());
+			return true;
+			}catch(IllegalArgumentException e) {
+				return false;
+			}
+		}
+		
 
 		protected <X> long calculateTotal(Pageable pager, List<X> result) {
 			if (pager.hasPrevious()) {
