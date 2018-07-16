@@ -29,6 +29,13 @@ import static org.junit.Assert.*;
 
 public class QueryUtilsTest {
 
+	private  String withCaluseSql  = "with tmp47b6eb3d_979f_4df4_9d1e_18148667f54a (id, name, code, create_time,parent_id, remark) as ( \n"+
+	"select id, name, code, create_time,parent_id,remark from org where id = ?\n "+
+    "union all \n "+
+	"select o.id, o.name, o.code, o.create_time, o.parent_id, o.remark  from org o  inner join  tmp47b6eb3d_979f_4df4_9d1e_18148667f54a  where o.parent_id = tmp47b6eb3d_979f_4df4_9d1e_18148667f54a.id ) \n"+
+    "select id, name, code, create_time,parent_id, remark from tmp47b6eb3d_979f_4df4_9d1e_18148667f54a \"org\"";
+	
+	
 	@Test
 	public void testCreateCountQueryFor() {
 		assertEquals("SELECT COUNT(*) FROM ( select name, age from user where name = ? order by name,age desc )", QueryUtils.createCountQueryFor("select name, age from user where name = ? order by name,age desc"));
@@ -39,6 +46,7 @@ public class QueryUtilsTest {
 		StringBuilder sb = new StringBuilder();
 		sb.append("with tmp as ( selct * from user ) select * from tmp");
 		assertEquals("with tmp as ( selct * from user ) SELECT COUNT(*) FROM (  select * from tmp )", QueryUtils.createCountQueryFor(sb.toString()));
+		QueryUtils.createCountQueryFor(withCaluseSql);
 	}
 
 }

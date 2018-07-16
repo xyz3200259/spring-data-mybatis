@@ -41,7 +41,7 @@ public final class QueryUtils {
 			"(^" + SPACE_NEWLINE_LINEFEED + "WITH" + SPACE_NEWLINE_LINEFEED + ")", Pattern.CASE_INSENSITIVE);
 
 	private static final Pattern WITH_EXPRESSION_NAME = Pattern.compile(
-			"(^" + SPACE_NEWLINE_LINEFEED + "[a-zA-Z0-9]*" + SPACE_NEWLINE_LINEFEED + ")", Pattern.CASE_INSENSITIVE);
+			"(^" + SPACE_NEWLINE_LINEFEED + "[a-zA-Z0-9_]*" + SPACE_NEWLINE_LINEFEED + ")", Pattern.CASE_INSENSITIVE);
 
 	private static final Pattern WITH_COLUMN_NAMES_START = Pattern.compile("(^" + SPACE_NEWLINE_LINEFEED + "\\()",
 			Pattern.CASE_INSENSITIVE);
@@ -81,6 +81,7 @@ public final class QueryUtils {
 			Matcher matcher = WITH_EXPRESSION_NAME.matcher(sql.substring(offset));
 			if (matcher.find() && matcher.groupCount() > 0) {
 				offset += matcher.end();
+				System.out.println(sql.substring(offset));
 				matcher = WITH_COLUMN_NAMES_START.matcher(sql.substring(offset));
 				if (matcher.find() && matcher.groupCount() > 0) {
 					offset += matcher.end();
