@@ -35,7 +35,7 @@ public class ExampleInfo {
 	private String matcher;
 
 	private boolean ignoreCase;
-	
+
 	private boolean includeNull;
 
 	public Object getValue() {
@@ -61,13 +61,13 @@ public class ExampleInfo {
 	public void setIgnoreCase(boolean ignoreCase) {
 		this.ignoreCase = ignoreCase;
 	}
-	
+
 	public boolean isIncludeNull() {
 		return includeNull;
 	}
-	
+
 	public void setIncludeNull(boolean includeNull) {
 		this.includeNull = includeNull;
 	}
-	
+
 }

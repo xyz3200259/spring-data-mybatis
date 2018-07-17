@@ -67,8 +67,7 @@ public abstract class MybatisQueryExecution {
 
 		try {
 			result = doExecute(query, values);
-		}
-		catch (NoResultException e) {
+		} catch (NoResultException e) {
 			return null;
 		}
 
@@ -161,8 +160,7 @@ public abstract class MybatisQueryExecution {
 			Pageable pageable = (Pageable) values[parameters.getPageableIndex()];
 			if (parameters.hasSortParameter()) {
 				parameter.put("_sorts", values[parameters.getSortIndex()]);
-			}
-			else {
+			} else {
 				if (pageable.getSort() != null && pageable.getSort().isSorted()) {
 					parameter.put("_sorts", pageable.getSort());
 				}
@@ -197,8 +195,7 @@ public abstract class MybatisQueryExecution {
 
 			if (parameters.hasSortParameter()) {
 				parameter.put("_sorts", values[parameters.getSortIndex()]);
-			}
-			else if (null != pager) {
+			} else if (null != pager) {
 				if (pager.getSort() != null && pager.getSort().isSorted()) {
 					parameter.put("_sorts", pager.getSort());
 				}
@@ -214,8 +211,7 @@ public abstract class MybatisQueryExecution {
 					NativePagedQueryPlugin.startNativePagedQuery(query.getDialect());
 				}
 				result = query.getSqlSessionTemplate().selectList(query.getStatementId(), parameter);
-			}
-			finally {
+			} finally {
 				if (query.isNativeStatement()) {
 					NativePagedQueryPlugin.endNativePagedQuery();
 				}
@@ -227,7 +223,7 @@ public abstract class MybatisQueryExecution {
 
 			long total = calculateTotal(pager, result);
 			if (total < 0) {
-				if(isCountStatementIdExist(query)) {
+				if (isCountStatementIdExist(query)) {
 					total = query.getSqlSessionTemplate().selectOne(query.getCountStatementId(), parameter);
 				} else {
 					if (query.isNativeStatement()) {
@@ -235,8 +231,7 @@ public abstract class MybatisQueryExecution {
 						try {
 							query.getSqlSessionTemplate().clearCache();
 							total = query.getSqlSessionTemplate().selectOne(query.getStatementId(), parameter);
-						}
-						finally {
+						} finally {
 							NativePagedQueryPlugin.endNativePagedCountQuery();
 						}
 					}
@@ -244,16 +239,15 @@ public abstract class MybatisQueryExecution {
 			}
 			return new PageImpl(result, pager, total);
 		}
-		
+
 		private boolean isCountStatementIdExist(AbstractMybatisQuery query) {
 			try {
-			query.getSqlSessionTemplate().getConfiguration().getMappedStatement(query.getCountStatementId());
-			return true;
-			}catch(IllegalArgumentException e) {
+				query.getSqlSessionTemplate().getConfiguration().getMappedStatement(query.getCountStatementId());
+				return true;
+			} catch (IllegalArgumentException e) {
 				return false;
 			}
 		}
-		
 
 		protected <X> long calculateTotal(Pageable pager, List<X> result) {
 			if (pager.hasPrevious()) {
@@ -400,11 +394,9 @@ public abstract class MybatisQueryExecution {
 				Class<?> optionalType = ClassUtils.forName("java.util.Optional", classLoader);
 				conversionService.removeConvertible(Object.class, optionalType);
 
-			}
-			catch (ClassNotFoundException e) {
+			} catch (ClassNotFoundException e) {
 				return;
-			}
-			catch (LinkageError e) {
+			} catch (LinkageError e) {
 				return;
 			}
 		}

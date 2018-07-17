@@ -32,17 +32,22 @@ public final class SQLUtils {
 	// CTE pattern support
 	private static final String SPACE_NEWLINE_LINEFEED = "[\\s\\t\\n\\r]*";
 
-	private static final Pattern WITH_CTE = Pattern.compile( "(^" + SPACE_NEWLINE_LINEFEED + "WITH" + SPACE_NEWLINE_LINEFEED + ")", Pattern.CASE_INSENSITIVE);
+	private static final Pattern WITH_CTE = Pattern
+			.compile("(^" + SPACE_NEWLINE_LINEFEED + "WITH" + SPACE_NEWLINE_LINEFEED + ")", Pattern.CASE_INSENSITIVE);
 
-	private static final Pattern WITH_EXPRESSION_NAME = Pattern.compile( "(^" + SPACE_NEWLINE_LINEFEED + "[a-zA-Z0-9_]*" + SPACE_NEWLINE_LINEFEED + ")", Pattern.CASE_INSENSITIVE);
+	private static final Pattern WITH_EXPRESSION_NAME = Pattern.compile(
+			"(^" + SPACE_NEWLINE_LINEFEED + "[a-zA-Z0-9_]*" + SPACE_NEWLINE_LINEFEED + ")", Pattern.CASE_INSENSITIVE);
 
-	private static final Pattern WITH_COLUMN_NAMES_START = Pattern.compile("(^" + SPACE_NEWLINE_LINEFEED + "\\()", Pattern.CASE_INSENSITIVE);
+	private static final Pattern WITH_COLUMN_NAMES_START = Pattern.compile("(^" + SPACE_NEWLINE_LINEFEED + "\\()",
+			Pattern.CASE_INSENSITIVE);
 
 	private static final Pattern WITH_COLUMN_NAMES_END = Pattern.compile("(\\))", Pattern.CASE_INSENSITIVE);
 
-	private static final Pattern WITH_AS = Pattern.compile( "(^" + SPACE_NEWLINE_LINEFEED + "AS" + SPACE_NEWLINE_LINEFEED + ")", Pattern.CASE_INSENSITIVE);
+	private static final Pattern WITH_AS = Pattern
+			.compile("(^" + SPACE_NEWLINE_LINEFEED + "AS" + SPACE_NEWLINE_LINEFEED + ")", Pattern.CASE_INSENSITIVE);
 
-	private static final Pattern WITH_COMMA = Pattern.compile("(^" + SPACE_NEWLINE_LINEFEED + ",)", Pattern.CASE_INSENSITIVE);
+	private static final Pattern WITH_COMMA = Pattern.compile("(^" + SPACE_NEWLINE_LINEFEED + ",)",
+			Pattern.CASE_INSENSITIVE);
 
 	public static int matchWithCET(String sql) {
 		final Matcher matcher = WITH_CTE.matcher(sql);
@@ -70,19 +75,15 @@ public final class SQLUtils {
 						if (matcher.find() && matcher.groupCount() > 0) {
 							// another CTE fragment exists, re-start parse of CTE
 							offset += matcher.end();
-						}
-						else {
+						} else {
 							// last CTE fragment, we're at the start of the SQL.
 							return offset;
 						}
-					}
-					else {
+					} else {
 						throw new IllegalArgumentException(String.format(Locale.ROOT,
-								"Failed to parse CTE expression columns at offset %d, SQL [%s]", offset,
-								sql.toString()));
+								"Failed to parse CTE expression columns at offset %d, SQL [%s]", offset, sql.toString()));
 					}
-				}
-				else {
+				} else {
 					matcher = WITH_AS.matcher(sql.substring(offset));
 					if (matcher.find() && matcher.groupCount() > 0) {
 						offset += matcher.end();
@@ -91,20 +92,16 @@ public final class SQLUtils {
 						if (matcher.find() && matcher.groupCount() > 0) {
 							// another CTE fragment exists, re-start parse of CTE
 							offset += matcher.end();
-						}
-						else {
+						} else {
 							// last CTE fragment, we're at the start of the SQL.
 							return offset;
 						}
-					}
-					else {
+					} else {
 						throw new IllegalArgumentException(String.format(Locale.ROOT,
-								"Failed to locate AS keyword in CTE query at offset %d, SQL [%s]", offset,
-								sql.toString()));
+								"Failed to locate AS keyword in CTE query at offset %d, SQL [%s]", offset, sql.toString()));
 					}
 				}
-			}
-			else {
+			} else {
 				throw new IllegalArgumentException(String.format(Locale.ROOT,
 						"Failed to locate CTE expression name at offset %d, SQL [%s]", offset, sql.toString()));
 			}
@@ -127,14 +124,11 @@ public final class SQLUtils {
 		for (; index < sql.length(); ++index) {
 			if (sql.charAt(index) == '\'') {
 				inString = true;
-			}
-			else if (sql.charAt(index) == '\'' && inString) {
+			} else if (sql.charAt(index) == '\'' && inString) {
 				inString = false;
-			}
-			else if (sql.charAt(index) == '(' && !inString) {
+			} else if (sql.charAt(index) == '(' && !inString) {
 				brackets++;
-			}
-			else if (sql.charAt(index) == ')' && !inString) {
+			} else if (sql.charAt(index) == ')' && !inString) {
 				brackets--;
 				if (brackets == 0) {
 					break;

@@ -74,8 +74,8 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 
 	private final String statementName;
 
-	protected PartTreeMybatisQuery(MybatisMappingContext context, SqlSessionTemplate sqlSessionTemplate,
-			Dialect dialect, MybatisQueryMethod method) {
+	protected PartTreeMybatisQuery(MybatisMappingContext context, SqlSessionTemplate sqlSessionTemplate, Dialect dialect,
+			MybatisQueryMethod method) {
 		super(sqlSessionTemplate, method, dialect);
 		this.entityInformation = method.getEntityInformation();
 		this.domainClass = this.entityInformation.getJavaType();
@@ -118,20 +118,21 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 			for (Iterator<Part> it = orPart.iterator(); it.hasNext();) {
 				String columnName = null;
 				Part part = it.next();
-				MybatisPersistentProperty property = persistentEntity.getPersistentProperty(
-						part.getProperty().getSegment());
+				MybatisPersistentProperty property = persistentEntity.getPersistentProperty(part.getProperty().getSegment());
 				if (null == property) {
-					throw new MybatisQueryException("can not find property: " + part.getProperty().getSegment() + " from entity: " + persistentEntity.getName());
+					throw new MybatisQueryException("can not find property: " + part.getProperty().getSegment() + " from entity: "
+							+ persistentEntity.getName());
 				}
 				if (!property.isEntity()) {
 					columnName = quota(persistentEntity.getEntityName()) + "." + dialect.wrapColumnName(property.getColumnName());
 				} else {
 					if (property.isAssociation()) {
-					     MybatisEmbeddedAssociation association = (MybatisEmbeddedAssociation) property.getAssociation();
-		                 MybatisPersistentEntity<?> obversePersistentEntity = association.getObversePersistentEntity();
-		                 String peopertyName = part.getProperty().next().getSegment();
-		                 MybatisPersistentProperty subProperty = obversePersistentEntity.getPersistentProperty(peopertyName);
-	                     columnName = quota(persistentEntity.getEntityName()) + "." + dialect.wrapColumnName(subProperty.getColumnName());
+						MybatisEmbeddedAssociation association = (MybatisEmbeddedAssociation) property.getAssociation();
+						MybatisPersistentEntity<?> obversePersistentEntity = association.getObversePersistentEntity();
+						String peopertyName = part.getProperty().next().getSegment();
+						MybatisPersistentProperty subProperty = obversePersistentEntity.getPersistentProperty(peopertyName);
+						columnName = quota(persistentEntity.getEntityName()) + "."
+								+ dialect.wrapColumnName(subProperty.getColumnName());
 					}
 				}
 
@@ -145,8 +146,7 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 				IgnoreCaseType ignoreCaseType = part.shouldIgnoreCase();
 				if (ignoreCaseType == ALWAYS || ignoreCaseType == WHEN_POSSIBLE) {
 					builder.append("upper(").append(columnName).append(")");
-				}
-				else {
+				} else {
 					builder.append(columnName);
 				}
 
@@ -273,7 +273,7 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 
 		return doCreateSelectQueryStatement(getStatementName());
 	}
-	
+
 	private String doCreateExistQueryStatement() {
 		Class<?> returnedObjectType = method.getReturnedObjectType();
 
@@ -284,7 +284,6 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 		return doCreateSelectQueryStatement(getStatementName());
 	}
 
-
 	private void doCreateQueryStatement(MybatisQueryMethod method) {
 
 		Configuration configuration = sqlSessionTemplate.getConfiguration();
@@ -292,26 +291,19 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 		String statementXML = "";
 		if (tree.isDelete()) {
 			statementXML = doCreateDeleteQueryStatement();
-		}
-		else if (tree.isCountProjection()) {
+		} else if (tree.isCountProjection()) {
 			statementXML = doCreateCountQueryStatement(getStatementName());
-		}
-		else if (tree.isExistsProjection()) {
+		} else if (tree.isExistsProjection()) {
 			statementXML = doCreateExistQueryStatement();
-		}
-		else if (method.isPageQuery()) {
+		} else if (method.isPageQuery()) {
 			statementXML = doCreatePageQueryStatement(true);
-		}
-		else if (method.isSliceQuery()) {
+		} else if (method.isSliceQuery()) {
 			statementXML = doCreatePageQueryStatement(false);
-		}
-		else if (method.isStreamQuery()) {
+		} else if (method.isStreamQuery()) {
 			statementXML = doCreateCollectionQueryStatement();
-		}
-		else if (method.isCollectionQuery()) {
+		} else if (method.isCollectionQuery()) {
 			statementXML = doCreateCollectionQueryStatement();
-		}
-		else if (method.isQueryForEntity()) {
+		} else if (method.isQueryForEntity()) {
 			statementXML = doCreateSelectOneQueryStatement(getStatementName());
 		}
 
@@ -330,8 +322,7 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 		InputStream inputStream = null;
 		try {
 			inputStream = new ByteArrayInputStream(xml.getBytes("UTF-8"));
-		}
-		catch (UnsupportedEncodingException e) {
+		} catch (UnsupportedEncodingException e) {
 			// ignore
 		}
 		String namespace = getNamespace();
@@ -340,15 +331,12 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 			XMLMapperBuilder xmlMapperBuilder = new XMLMapperBuilder(inputStream, configuration, resource,
 					configuration.getSqlFragments(), namespace);
 			xmlMapperBuilder.parse();
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			throw new MappingException("create auto mapping error for " + namespace, e);
-		}
-		finally {
+		} finally {
 			try {
 				inputStream.close();
-			}
-			catch (IOException e) {
+			} catch (IOException e) {
 				logger.error(e.getMessage(), e);
 			}
 		}

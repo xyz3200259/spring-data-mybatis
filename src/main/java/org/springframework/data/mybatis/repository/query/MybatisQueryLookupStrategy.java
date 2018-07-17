@@ -39,106 +39,105 @@ import java.lang.reflect.Method;
  */
 public final class MybatisQueryLookupStrategy {
 
-    private MybatisQueryLookupStrategy() {
-    }
+	private MybatisQueryLookupStrategy() {
+	}
 
-    private abstract static class AbstractQueryLookupStrategy implements QueryLookupStrategy {
+	private abstract static class AbstractQueryLookupStrategy implements QueryLookupStrategy {
 
-        @Override
-        public RepositoryQuery resolveQuery(Method method, RepositoryMetadata metadata, ProjectionFactory factory, NamedQueries namedQueries) {
+		@Override
+		public RepositoryQuery resolveQuery(Method method, RepositoryMetadata metadata, ProjectionFactory factory,
+				NamedQueries namedQueries) {
 
-            return resolveQuery(new MybatisQueryMethod(method, metadata, factory), namedQueries);
-        }
+			return resolveQuery(new MybatisQueryMethod(method, metadata, factory), namedQueries);
+		}
 
-        protected abstract RepositoryQuery resolveQuery(MybatisQueryMethod method, NamedQueries namedQueries);
-    }
+		protected abstract RepositoryQuery resolveQuery(MybatisQueryMethod method, NamedQueries namedQueries);
+	}
 
-    private static class CreateQueryLookupStrategy extends AbstractQueryLookupStrategy {
+	private static class CreateQueryLookupStrategy extends AbstractQueryLookupStrategy {
 
-        private final MybatisMappingContext context;
-        private final SqlSessionTemplate    sqlSessionTemplate;
-        private final Dialect               dialect;
+		private final MybatisMappingContext context;
+		private final SqlSessionTemplate sqlSessionTemplate;
+		private final Dialect dialect;
 
-        public CreateQueryLookupStrategy(MybatisMappingContext context, SqlSessionTemplate sqlSessionTemplate, Dialect dialect) {
-            this.context = context;
-            this.sqlSessionTemplate = sqlSessionTemplate;
-            this.dialect = dialect;
-        }
+		public CreateQueryLookupStrategy(MybatisMappingContext context, SqlSessionTemplate sqlSessionTemplate,
+				Dialect dialect) {
+			this.context = context;
+			this.sqlSessionTemplate = sqlSessionTemplate;
+			this.dialect = dialect;
+		}
 
-        @Override
-        protected RepositoryQuery resolveQuery(MybatisQueryMethod method, NamedQueries namedQueries) {
-            try {
-                return new PartTreeMybatisQuery(context, sqlSessionTemplate, dialect, method);
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException(
-                        String.format("Could not create query metamodel for method %s!", method.toString()), e);
-            }
-        }
-    }
+		@Override
+		protected RepositoryQuery resolveQuery(MybatisQueryMethod method, NamedQueries namedQueries) {
+			try {
+				return new PartTreeMybatisQuery(context, sqlSessionTemplate, dialect, method);
+			} catch (IllegalArgumentException e) {
+				throw new IllegalArgumentException(
+						String.format("Could not create query metamodel for method %s!", method.toString()), e);
+			}
+		}
+	}
 
-    private static class DeclaredQueryLookupStrategy extends AbstractQueryLookupStrategy {
-        private final SqlSessionTemplate        sqlSessionTemplate;
-        private final EvaluationContextProvider evaluationContextProvider;
-        private final Dialect dialect;
+	private static class DeclaredQueryLookupStrategy extends AbstractQueryLookupStrategy {
+		private final SqlSessionTemplate sqlSessionTemplate;
+		private final EvaluationContextProvider evaluationContextProvider;
+		private final Dialect dialect;
 
-        private DeclaredQueryLookupStrategy(SqlSessionTemplate sqlSessionTemplate, EvaluationContextProvider evaluationContextProvider, Dialect dialect) {
-            this.sqlSessionTemplate = sqlSessionTemplate;
-            this.evaluationContextProvider = evaluationContextProvider;
-            this.dialect = dialect;
-        }
+		private DeclaredQueryLookupStrategy(SqlSessionTemplate sqlSessionTemplate,
+				EvaluationContextProvider evaluationContextProvider, Dialect dialect) {
+			this.sqlSessionTemplate = sqlSessionTemplate;
+			this.evaluationContextProvider = evaluationContextProvider;
+			this.dialect = dialect;
+		}
 
-        @Override
-        protected RepositoryQuery resolveQuery(MybatisQueryMethod method, NamedQueries namedQueries) {
+		@Override
+		protected RepositoryQuery resolveQuery(MybatisQueryMethod method, NamedQueries namedQueries) {
 
-            RepositoryQuery query = MybatisQueryFactory.INSTANCE.fromStatementAnnotation(sqlSessionTemplate, method, evaluationContextProvider, dialect);
-            if (null != query) {
-                return query;
-            }
-            throw new IllegalStateException(
-                    String.format("Did neither find a NamedQuery nor an annotated query for method %s!", method));
-        }
-    }
+			RepositoryQuery query = MybatisQueryFactory.INSTANCE.fromStatementAnnotation(sqlSessionTemplate, method,
+					evaluationContextProvider, dialect);
+			if (null != query) {
+				return query;
+			}
+			throw new IllegalStateException(
+					String.format("Did neither find a NamedQuery nor an annotated query for method %s!", method));
+		}
+	}
 
-    private static class CreateIfNotFoundQueryLookupStrategy extends AbstractQueryLookupStrategy {
-        private final DeclaredQueryLookupStrategy lookupStrategy;
-        private final CreateQueryLookupStrategy   createStrategy;
+	private static class CreateIfNotFoundQueryLookupStrategy extends AbstractQueryLookupStrategy {
+		private final DeclaredQueryLookupStrategy lookupStrategy;
+		private final CreateQueryLookupStrategy createStrategy;
 
-        private CreateIfNotFoundQueryLookupStrategy(
-                CreateQueryLookupStrategy createStrategy,
-                DeclaredQueryLookupStrategy lookupStrategy) {
-            this.lookupStrategy = lookupStrategy;
-            this.createStrategy = createStrategy;
-        }
+		private CreateIfNotFoundQueryLookupStrategy(CreateQueryLookupStrategy createStrategy,
+				DeclaredQueryLookupStrategy lookupStrategy) {
+			this.lookupStrategy = lookupStrategy;
+			this.createStrategy = createStrategy;
+		}
 
-        @Override
-        protected RepositoryQuery resolveQuery(MybatisQueryMethod method, NamedQueries namedQueries) {
-            try {
-                return lookupStrategy.resolveQuery(method, namedQueries);
-            } catch (IllegalStateException e) {
-                return createStrategy.resolveQuery(method, namedQueries);
-            }
+		@Override
+		protected RepositoryQuery resolveQuery(MybatisQueryMethod method, NamedQueries namedQueries) {
+			try {
+				return lookupStrategy.resolveQuery(method, namedQueries);
+			} catch (IllegalStateException e) {
+				return createStrategy.resolveQuery(method, namedQueries);
+			}
 
-        }
-    }
+		}
+	}
 
-    public static QueryLookupStrategy create(
-            MybatisMappingContext context,
-            SqlSessionTemplate sqlSessionTemplate,
-            Dialect dialect,
-            Key key,
-            EvaluationContextProvider evaluationContextProvider) {
-        Assert.notNull(evaluationContextProvider, "EvaluationContextProvider must not be null!");
-        switch (key != null ? key : Key.CREATE_IF_NOT_FOUND) {
-            case CREATE:
-                return new CreateQueryLookupStrategy(context, sqlSessionTemplate, dialect);
-            case USE_DECLARED_QUERY:
-                return new DeclaredQueryLookupStrategy(sqlSessionTemplate, evaluationContextProvider,dialect);
-            case CREATE_IF_NOT_FOUND:
-                return new CreateIfNotFoundQueryLookupStrategy(
-                        new CreateQueryLookupStrategy(context, sqlSessionTemplate, dialect),
-                        new DeclaredQueryLookupStrategy(sqlSessionTemplate, evaluationContextProvider,dialect));
-            default:
-                throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));
-        }
-    }
+	public static QueryLookupStrategy create(MybatisMappingContext context, SqlSessionTemplate sqlSessionTemplate,
+			Dialect dialect, Key key, EvaluationContextProvider evaluationContextProvider) {
+		Assert.notNull(evaluationContextProvider, "EvaluationContextProvider must not be null!");
+		switch (key != null ? key : Key.CREATE_IF_NOT_FOUND) {
+		case CREATE:
+			return new CreateQueryLookupStrategy(context, sqlSessionTemplate, dialect);
+		case USE_DECLARED_QUERY:
+			return new DeclaredQueryLookupStrategy(sqlSessionTemplate, evaluationContextProvider, dialect);
+		case CREATE_IF_NOT_FOUND:
+			return new CreateIfNotFoundQueryLookupStrategy(
+					new CreateQueryLookupStrategy(context, sqlSessionTemplate, dialect),
+					new DeclaredQueryLookupStrategy(sqlSessionTemplate, evaluationContextProvider, dialect));
+		default:
+			throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));
+		}
+	}
 }

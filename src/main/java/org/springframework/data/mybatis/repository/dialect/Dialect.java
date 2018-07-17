@@ -86,8 +86,7 @@ public class Dialect {
 
 		if (name.charAt(0) == '`') {
 			return openQuote() + name.substring(1, name.length() - 1) + closeQuote();
-		}
-		else {
+		} else {
 			return name;
 		}
 	}
@@ -113,8 +112,7 @@ public class Dialect {
 	}
 
 	/**
-	 * Get the name of the database type associated with the given
-	 * {@link java.sql.Types} typecode.
+	 * Get the name of the database type associated with the given {@link java.sql.Types} typecode.
 	 *
 	 * @param code The {@link java.sql.Types} typecode
 	 * @return the database type name
@@ -129,9 +127,8 @@ public class Dialect {
 	}
 
 	/**
-	 * Get the name of the database type associated with the given
-	 * {@link java.sql.Types} typecode with the given storage specification
-	 * parameters.
+	 * Get the name of the database type associated with the given {@link java.sql.Types} typecode with the given storage
+	 * specification parameters.
 	 *
 	 * @param code The {@link java.sql.Types} typecode
 	 * @param length The datatype length

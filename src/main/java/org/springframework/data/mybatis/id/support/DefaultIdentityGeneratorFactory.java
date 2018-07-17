@@ -75,8 +75,7 @@ public class DefaultIdentityGeneratorFactory<ID extends Serializable, T> impleme
 			if (StringUtils.isEmpty(generator)) {
 				if (pp.getActualType().equals(String.class)) {
 					generator = DEFAULT_STRING_TYPE_ID_GENERATOR;
-				}
-				else if (pp.getActualType().equals(Long.class) || pp.getActualType().equals(Integer.class)) {
+				} else if (pp.getActualType().equals(Long.class) || pp.getActualType().equals(Integer.class)) {
 					generator = DEFAULT_NUMERICAL_TYPE_GENERATOR;
 				}
 			}
@@ -85,8 +84,7 @@ public class DefaultIdentityGeneratorFactory<ID extends Serializable, T> impleme
 		return identityGenerator;
 	}
 
-	public void setCustomIdentityGeneratorFactory(
-			CustomIdentityGeneratorFactory<ID, T> customIdentityGeneratorFactory) {
+	public void setCustomIdentityGeneratorFactory(CustomIdentityGeneratorFactory<ID, T> customIdentityGeneratorFactory) {
 		this.customIdentityGeneratorFactory = customIdentityGeneratorFactory;
 	}
 }

@@ -47,7 +47,7 @@ public class PostgreSQLDialect extends Dialect {
 		}
 
 		@Override
-		public String processSql(String sql, int pageSize, long offset , long offsetEnd) {
+		public String processSql(String sql, int pageSize, long offset, long offsetEnd) {
 			return sql + " limit " + pageSize + "offset " + offset;
 		}
 

@@ -36,48 +36,48 @@ import java.sql.SQLException;
  */
 final class MybatisResultConverters {
 
-    private MybatisResultConverters() {
-    }
+	private MybatisResultConverters() {
+	}
 
-    enum BlobToByteArrayConverter implements Converter<Blob, byte[]> {
+	enum BlobToByteArrayConverter implements Converter<Blob, byte[]> {
 
-        INSTANCE;
+		INSTANCE;
 
-        @Override
-        public byte[] convert(Blob source) {
+		@Override
+		public byte[] convert(Blob source) {
 
-            if (source == null) {
-                return null;
-            }
+			if (source == null) {
+				return null;
+			}
 
-            InputStream blobStream = null;
-            try {
+			InputStream blobStream = null;
+			try {
 
-                blobStream = source.getBinaryStream();
+				blobStream = source.getBinaryStream();
 
-                if (blobStream != null) {
+				if (blobStream != null) {
 
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    StreamUtils.copy(blobStream, baos);
-                    return baos.toByteArray();
-                }
+					ByteArrayOutputStream baos = new ByteArrayOutputStream();
+					StreamUtils.copy(blobStream, baos);
+					return baos.toByteArray();
+				}
 
-            } catch (SQLException e) {
-                throw new DataRetrievalFailureException("Couldn't retrieve data from blob.", e);
-            } catch (IOException e) {
-                throw new DataRetrievalFailureException("Couldn't retrieve data from blob.", e);
-            } finally {
-                if (blobStream != null) {
-                    try {
-                        blobStream.close();
-                    } catch (IOException e) {
-                        throw new CleanupFailureDataAccessException("Couldn't close binary stream for given blob.", e);
-                    }
-                }
-            }
+			} catch (SQLException e) {
+				throw new DataRetrievalFailureException("Couldn't retrieve data from blob.", e);
+			} catch (IOException e) {
+				throw new DataRetrievalFailureException("Couldn't retrieve data from blob.", e);
+			} finally {
+				if (blobStream != null) {
+					try {
+						blobStream.close();
+					} catch (IOException e) {
+						throw new CleanupFailureDataAccessException("Couldn't close binary stream for given blob.", e);
+					}
+				}
+			}
 
-            return null;
-        }
-    }
+			return null;
+		}
+	}
 
 }

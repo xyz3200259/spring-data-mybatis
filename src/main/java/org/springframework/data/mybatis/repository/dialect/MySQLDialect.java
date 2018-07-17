@@ -53,12 +53,12 @@ public class MySQLDialect extends Dialect {
 		registerColumnType(Types.LONGVARBINARY, 16777215, "mediumblob");
 		registerColumnType(Types.NUMERIC, "decimal($p,$s)");
 		registerColumnType(Types.BLOB, "longblob");
-		//		registerColumnType( Types.BLOB, 16777215, "mediumblob" );
-		//		registerColumnType( Types.BLOB, 65535, "blob" );
+		// registerColumnType( Types.BLOB, 16777215, "mediumblob" );
+		// registerColumnType( Types.BLOB, 65535, "blob" );
 		registerColumnType(Types.CLOB, "longtext");
 		registerColumnType(Types.NCLOB, "longtext");
-		//		registerColumnType( Types.CLOB, 16777215, "mediumtext" );
-		//		registerColumnType( Types.CLOB, 65535, "text" );
+		// registerColumnType( Types.CLOB, 16777215, "mediumtext" );
+		// registerColumnType( Types.CLOB, 65535, "text" );
 	}
 
 	private static final AbstractLimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {

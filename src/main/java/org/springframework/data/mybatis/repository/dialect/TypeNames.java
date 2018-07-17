@@ -23,7 +23,6 @@
 
 package org.springframework.data.mybatis.repository.dialect;
 
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -32,27 +31,33 @@ import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mybatis.utils.StringUtils;
 
 /**
- * This class maps a type to names.  Associations may be marked with a capacity. Calling the get()
- * method with a type and actual size n will return  the associated name with smallest capacity >= n,
- * if available and an unmarked default type otherwise.
- * Eg, setting
+ * This class maps a type to names. Associations may be marked with a capacity. Calling the get() method with a type and
+ * actual size n will return the associated name with smallest capacity >= n, if available and an unmarked default type
+ * otherwise. Eg, setting
+ * 
  * <pre>
- *	names.put( type,        "TEXT" );
- *	names.put( type,   255, "VARCHAR($l)" );
- *	names.put( type, 65534, "LONGVARCHAR($l)" );
+ * names.put(type, "TEXT");
+ * names.put(type, 255, "VARCHAR($l)");
+ * names.put(type, 65534, "LONGVARCHAR($l)");
  * </pre>
+ * 
  * will give you back the following:
+ * 
  * <pre>
  *  names.get( type )         // --> "TEXT" (default)
  *  names.get( type,    100 ) // --> "VARCHAR(100)" (100 is in [0:255])
  *  names.get( type,   1000 ) // --> "LONGVARCHAR(1000)" (1000 is in [256:65534])
  *  names.get( type, 100000 ) // --> "TEXT" (default)
  * </pre>
+ * 
  * On the other hand, simply putting
+ * 
  * <pre>
- *	names.put( type, "VARCHAR($l)" );
+ * names.put(type, "VARCHAR($l)");
  * </pre>
+ * 
  * would result in
+ * 
  * <pre>
  *  names.get( type )        // --> "VARCHAR($l)" (will cause trouble)
  *  names.get( type, 100 )   // --> "VARCHAR(100)"
@@ -63,13 +68,13 @@ import org.springframework.data.mybatis.utils.StringUtils;
  */
 public class TypeNames {
 	/**
-	 * Holds default type mappings for a typeCode.  This is the non-sized mapping
+	 * Holds default type mappings for a typeCode. This is the non-sized mapping
 	 */
 	private Map<Integer, String> defaults = new HashMap<Integer, String>();
 
 	/**
-	 * Holds the weighted mappings for a typeCode.  The nested map is a TreeMap to sort its contents
-	 * based on the key (the weighting) to ensure proper iteration ordering during {@link #get(int, long, int, int)}
+	 * Holds the weighted mappings for a typeCode. The nested map is a TreeMap to sort its contents based on the key (the
+	 * weighting) to ensure proper iteration ordering during {@link #get(int, long, int, int)}
 	 */
 	private Map<Integer, Map<Long, String>> weighted = new HashMap<Integer, Map<Long, String>>();
 
@@ -83,9 +88,9 @@ public class TypeNames {
 	 * @throws MappingException Indicates that no registrations were made for that typeCode
 	 */
 	public String get(int typeCode) throws MappingException {
-		final String result = defaults.get( typeCode );
-		if ( result == null ) {
-			throw new MappingException( "No Dialect mapping for JDBC type: " + typeCode );
+		final String result = defaults.get(typeCode);
+		if (result == null) {
+			throw new MappingException("No Dialect mapping for JDBC type: " + typeCode);
 		}
 		return result;
 	}
@@ -103,26 +108,26 @@ public class TypeNames {
 	 * @throws MappingException Indicates that no registrations were made for that typeCode
 	 */
 	public String get(int typeCode, long size, int precision, int scale) throws MappingException {
-		final Map<Long, String> map = weighted.get( typeCode );
-		if ( map != null && map.size() > 0 ) {
+		final Map<Long, String> map = weighted.get(typeCode);
+		if (map != null && map.size() > 0) {
 			// iterate entries ordered by capacity to find first fit
-			for ( Map.Entry<Long, String> entry: map.entrySet() ) {
-				if ( size <= entry.getKey() ) {
-					return replace( entry.getValue(), size, precision, scale );
+			for (Map.Entry<Long, String> entry : map.entrySet()) {
+				if (size <= entry.getKey()) {
+					return replace(entry.getValue(), size, precision, scale);
 				}
 			}
 		}
 
 		// if we get here one of 2 things happened:
-		//		1) There was no weighted registration for that typeCode
-		//		2) There was no weighting whose max capacity was big enough to contain size
-		return replace( get( typeCode ), size, precision, scale );
+		// 1) There was no weighted registration for that typeCode
+		// 2) There was no weighting whose max capacity was big enough to contain size
+		return replace(get(typeCode), size, precision, scale);
 	}
 
 	private static String replace(String type, long size, int precision, int scale) {
-		type = StringUtils.replaceOnce( type, "$s", Integer.toString( scale ) );
-		type = StringUtils.replaceOnce( type, "$l", Long.toString( size ) );
-		return StringUtils.replaceOnce( type, "$p", Integer.toString( precision ) );
+		type = StringUtils.replaceOnce(type, "$s", Integer.toString(scale));
+		type = StringUtils.replaceOnce(type, "$l", Long.toString(size));
+		return StringUtils.replaceOnce(type, "$p", Integer.toString(precision));
 	}
 
 	/**
@@ -133,13 +138,13 @@ public class TypeNames {
 	 * @param value The mapping (type name)
 	 */
 	public void put(int typeCode, long capacity, String value) {
-		Map<Long, String> map = weighted.get( typeCode );
-		if ( map == null ) {
+		Map<Long, String> map = weighted.get(typeCode);
+		if (map == null) {
 			// add new ordered map
 			map = new TreeMap<Long, String>();
-			weighted.put( typeCode, map );
+			weighted.put(typeCode, map);
 		}
-		map.put( capacity, value );
+		map.put(capacity, value);
 	}
 
 	/**
@@ -149,7 +154,7 @@ public class TypeNames {
 	 * @param value The mapping (type name)
 	 */
 	public void put(int typeCode, String value) {
-		defaults.put( typeCode, value );
+		defaults.put(typeCode, value);
 	}
 
 	/**
@@ -160,6 +165,6 @@ public class TypeNames {
 	 * @return true if the given string has been registered as a type.
 	 */
 	public boolean containsTypeName(final String typeName) {
-		return this.defaults.containsValue( typeName );
+		return this.defaults.containsValue(typeName);
 	}
 }

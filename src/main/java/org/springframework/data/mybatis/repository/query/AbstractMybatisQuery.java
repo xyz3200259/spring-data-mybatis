@@ -66,7 +66,7 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 	protected final MybatisQueryMethod method;
 
 	protected final Dialect dialect;
-	
+
 	protected AbstractMybatisQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method, Dialect dialect) {
 		this.sqlSessionTemplate = sqlSessionTemplate;
 		this.method = method;
@@ -92,9 +92,9 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 
 		return withDynamicProjection.processResult(result, new TupleConverter(withDynamicProjection.getReturnedType()));
 	}
-	
+
 	protected boolean isNativeStatement() {
-		return null!= method.getStatementAnnotation();
+		return null != method.getStatementAnnotation();
 	}
 
 	protected Type getStatementType() {
@@ -125,8 +125,7 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 
 		return annotation.namespace();
 	}
-	
-	
+
 	protected Dialect getDialect() {
 		return dialect;
 	}
@@ -149,48 +148,43 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 
 	protected MybatisQueryExecution getExecution() {
 		Type operation = getStatementType();
-				
+
 		if (null != operation && operation != AUTO) {
 			switch (operation) {
-				case INSERT:
-					return new InsertExecution();
-				case UPDATE:
-					return new UpdateExecution();
-				case SELECT_ONE:
-					return new SingleEntityExecution();
-				case SELECT_LIST:
-					return new CollectionExecution();
-				case DELETE:
-					return new DeleteExecution();
-				case PAGE:
-					return new PagedExecution();
-				case STREAM:
-					return new StreamExecution();
-				case SLICE:
-					return new SlicedExecution();
-				case AUTO:
-					break;
+			case INSERT:
+				return new InsertExecution();
+			case UPDATE:
+				return new UpdateExecution();
+			case SELECT_ONE:
+				return new SingleEntityExecution();
+			case SELECT_LIST:
+				return new CollectionExecution();
+			case DELETE:
+				return new DeleteExecution();
+			case PAGE:
+				return new PagedExecution();
+			case STREAM:
+				return new StreamExecution();
+			case SLICE:
+				return new SlicedExecution();
+			case AUTO:
+				break;
 			}
 		}
 
 		if (method.isStreamQuery()) {
 			return new StreamExecution();
-		}
-		else if (method.isSliceQuery()) {
+		} else if (method.isSliceQuery()) {
 			return new SlicedExecution();
-		}
-		else if (method.isPageQuery()) {
+		} else if (method.isPageQuery()) {
 			return new PagedExecution();
-		}
-		else if (method.isCollectionQuery()) {
+		} else if (method.isCollectionQuery()) {
 			return new CollectionExecution();
-		}
-		else {
+		} else {
 			PartTree pt = new PartTree(method.getName(), method.getEntityInformation().getJavaType());
 			if (pt.isExistsProjection()) {
 				return new ExistsExecution();
-			}
-			else {
+			} else {
 				return new SingleEntityExecution();
 			}
 		}
@@ -278,8 +272,7 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 				try {
 					tuple.get((String) key);
 					return true;
-				}
-				catch (IllegalArgumentException e) {
+				} catch (IllegalArgumentException e) {
 					return false;
 				}
 			}
@@ -306,8 +299,7 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 
 				try {
 					return tuple.get((String) key);
-				}
-				catch (IllegalArgumentException e) {
+				} catch (IllegalArgumentException e) {
 					return null;
 				}
 			}

@@ -28,88 +28,79 @@ import java.util.regex.Pattern;
  */
 public abstract class StringUtils {
 
+	public static final char UNDERLINE = '_';
 
-    public static final char UNDERLINE = '_';
+	public static final String EMPTY_STRING = "";
 
-    public static final String EMPTY_STRING = "";
+	public static boolean isEmpty(String str) {
+		return str == null || EMPTY_STRING.equals(str.trim());
+	}
 
+	public static boolean isNotEmpty(String str) {
+		return !isEmpty(str);
+	}
 
-    public static boolean isEmpty(String str) {
-        return str == null || EMPTY_STRING.equals(str.trim());
-    }
+	public static String camelToUnderline(String param) {
+		if (isEmpty(param)) {
+			return EMPTY_STRING;
+		}
+		int len = param.length();
+		StringBuilder sb = new StringBuilder(len);
+		for (int i = 0; i < len; i++) {
+			char c = param.charAt(i);
+			if (Character.isUpperCase(c) && i > 0) {
+				sb.append(UNDERLINE);
+			}
+			sb.append(Character.toLowerCase(c));
+		}
+		return sb.toString();
+	}
 
-    public static boolean isNotEmpty(String str) {
-        return !isEmpty(str);
-    }
+	public static String underlineToCamel(String param) {
+		if (isEmpty(param)) {
+			return EMPTY_STRING;
+		}
+		int len = param.length();
+		StringBuilder sb = new StringBuilder(len);
+		for (int i = 0; i < len; i++) {
+			char c = param.charAt(i);
+			if (c == UNDERLINE) {
+				if (++i < len) {
+					sb.append(Character.toUpperCase(param.charAt(i)));
+				}
+			} else {
+				sb.append(c);
+			}
+		}
+		return sb.toString();
+	}
 
+	public static boolean isUpperCase(String str) {
+		return match("^[A-Z]+$", str);
+	}
 
-    public static String camelToUnderline(String param) {
-        if (isEmpty(param)) {
-            return EMPTY_STRING;
-        }
-        int len = param.length();
-        StringBuilder sb = new StringBuilder(len);
-        for (int i = 0; i < len; i++) {
-            char c = param.charAt(i);
-            if (Character.isUpperCase(c) && i > 0) {
-                sb.append(UNDERLINE);
-            }
-            sb.append(Character.toLowerCase(c));
-        }
-        return sb.toString();
-    }
+	public static boolean match(String regex, String str) {
+		Pattern pattern = Pattern.compile(regex);
+		Matcher matcher = pattern.matcher(str);
+		return matcher.matches();
+	}
 
+	public static String replaceOnce(String template, String placeholder, String replacement) {
+		if (template == null) {
+			return null; // returnign null!
+		}
+		int loc = template.indexOf(placeholder);
+		if (loc < 0) {
+			return template;
+		} else {
+			return template.substring(0, loc) + replacement + template.substring(loc + placeholder.length());
+		}
+	}
 
-    public static String underlineToCamel(String param) {
-        if (isEmpty(param)) {
-            return EMPTY_STRING;
-        }
-        int len = param.length();
-        StringBuilder sb = new StringBuilder(len);
-        for (int i = 0; i < len; i++) {
-            char c = param.charAt(i);
-            if (c == UNDERLINE) {
-                if (++i < len) {
-                    sb.append(Character.toUpperCase(param.charAt(i)));
-                }
-            } else {
-                sb.append(c);
-            }
-        }
-        return sb.toString();
-    }
-
-    public static boolean isUpperCase(String str) {
-        return match("^[A-Z]+$", str);
-    }
-
-
-    public static boolean match(String regex, String str) {
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(str);
-        return matcher.matches();
-    }
-
-    public static String replaceOnce(String template, String placeholder, String replacement) {
-        if (template == null) {
-            return null;  // returnign null!
-        }
-        int loc = template.indexOf(placeholder);
-        if (loc < 0) {
-            return template;
-        } else {
-            return template.substring(0, loc) + replacement + template.substring(loc + placeholder.length());
-        }
-    }
-    
-    public static String qualify(String prefix, String name) {
-		if ( name == null || prefix == null ) {
+	public static String qualify(String prefix, String name) {
+		if (name == null || prefix == null) {
 			throw new NullPointerException();
 		}
-		return new StringBuffer( prefix.length() + name.length() + 1 )
-				.append(prefix)
-				.append('.')
-				.append(name)
-				.toString();
+		return new StringBuffer(prefix.length() + name.length() + 1).append(prefix).append('.').append(name).toString();
 	}
 }

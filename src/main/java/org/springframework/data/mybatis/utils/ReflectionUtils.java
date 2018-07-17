@@ -36,7 +36,8 @@ import org.springframework.lang.Nullable;
 public final class ReflectionUtils {
 
 	/**
-	 * Sets the given field on the given object to the given value if the field old value is null. Will make sure the given field is accessible.
+	 * Sets the given field on the given object to the given value if the field old value is null. Will make sure the
+	 * given field is accessible.
 	 *
 	 * @param field must not be {@literal null}.
 	 * @param target must not be {@literal null}.
@@ -48,8 +49,7 @@ public final class ReflectionUtils {
 			if (field.get(target) == null) {
 				org.springframework.util.ReflectionUtils.setField(field, target, value);
 			}
-		}
-		catch (IllegalAccessException ex) {
+		} catch (IllegalAccessException ex) {
 			org.springframework.util.ReflectionUtils.handleReflectionException(ex);
 			throw new IllegalStateException(
 					"Unexpected reflection exception - " + ex.getClass().getName() + ": " + ex.getMessage());

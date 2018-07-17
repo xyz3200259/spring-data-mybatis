@@ -28,9 +28,9 @@ import static java.lang.annotation.ElementType.*;
  * @author Jarvis Song
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(value = {FIELD, METHOD, ANNOTATION_TYPE})
+@Target(value = { FIELD, METHOD, ANNOTATION_TYPE })
 public @interface TypeHandler {
 
-    Class<? extends org.apache.ibatis.type.TypeHandler<?>> value();
+	Class<? extends org.apache.ibatis.type.TypeHandler<?>> value();
 
 }

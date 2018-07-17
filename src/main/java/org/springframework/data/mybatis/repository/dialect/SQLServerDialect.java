@@ -36,7 +36,9 @@ public class SQLServerDialect extends Dialect {
 		}
 
 		/**
-		 *  * <pre>
+		 * *
+		 * 
+		 * <pre>
 		 * WITH query AS (
 		 *   SELECT inner_query.*
 		 *        , ROW_NUMBER() OVER (ORDER BY CURRENT_TIMESTAMP) as __hibernate_row_nr__
@@ -44,6 +46,7 @@ public class SQLServerDialect extends Dialect {
 		 * )
 		 * SELECT alias_list FROM query WHERE __hibernate_row_nr__ >= offset AND __hibernate_row_nr__ < offset + last
 		 * </pre>
+		 * 
 		 * @return
 		 */
 		@Override
@@ -62,8 +65,7 @@ public class SQLServerDialect extends Dialect {
 				String[] ass = c.split(" as ");
 				if (ass.length == 1) {
 					alias.append(c).append(",");
-				}
-				else {
+				} else {
 					alias.append(ass[1]).append(",");
 				}
 			}
@@ -91,8 +93,7 @@ public class SQLServerDialect extends Dialect {
 			wrapSql.append(sql);
 			wrapSql.append(" ) inner_query ) ");
 			wrapSql.append("select *");
-			wrapSql.append(
-					" from query where __mybatis_row_nr__  > " + offset + " and __mybatis_row_nr__  <= " + offsetEnd);
+			wrapSql.append(" from query where __mybatis_row_nr__  > " + offset + " and __mybatis_row_nr__  <= " + offsetEnd);
 			return sql.toString();
 
 		}

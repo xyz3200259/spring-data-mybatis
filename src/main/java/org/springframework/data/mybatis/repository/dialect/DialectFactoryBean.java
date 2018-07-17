@@ -71,8 +71,7 @@ public class DialectFactoryBean implements FactoryBean<Dialect>, InitializingBea
 
 			this.dialect = getDialect(metaData);
 
-		}
-		finally {
+		} finally {
 			if (null != conn) {
 				conn.close();
 			}

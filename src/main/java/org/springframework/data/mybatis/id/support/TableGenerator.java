@@ -44,7 +44,7 @@ import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.jdbc.support.MetaDataAccessException;
 
 /**
- * 实现了 {@link javax.persistence.TableGenerator}. 
+ * 实现了 {@link javax.persistence.TableGenerator}.
  * 
  * @author 7cat
  * @since 1.0
@@ -79,7 +79,7 @@ public class TableGenerator implements IdentityGenerator<Serializable> {
 	public static final int DEFAULT_INITIAL_VALUE = 1;
 
 	/**
-	 * Indicates the increment size to use.  The default value is {@link #DEFAULT_INCREMENT_SIZE}
+	 * Indicates the increment size to use. The default value is {@link #DEFAULT_INCREMENT_SIZE}
 	 */
 	public static final String INCREMENT_PARAM = "increment_size";
 
@@ -119,13 +119,12 @@ public class TableGenerator implements IdentityGenerator<Serializable> {
 			boolean result = (boolean) JdbcUtils.extractDatabaseMetaData(dataSource, (DatabaseMetaData action) -> {
 				ResultSet rs = null;
 				try {
-					// 使用 DatabaseMetaData 查找 table 
+					// 使用 DatabaseMetaData 查找 table
 					rs = action.getTables(null, null, tableName.toUpperCase(), new String[] { "TABLE" });
 					if (rs.next()) {
 						return true;
 					}
-				}
-				finally {
+				} finally {
 					JdbcUtils.closeResultSet(rs);
 				}
 				return false;
@@ -135,20 +134,17 @@ public class TableGenerator implements IdentityGenerator<Serializable> {
 				try {
 					// 尝试直接执行查询
 					template.execute("select count(*) from " + tableName);
-				}
-				catch (Exception e1) {
+				} catch (Exception e1) {
 					logger.debug("Init Sequence table " + DEF_TABLE + " .");
 					try {
 						// 尝试新建表
 						template.execute(sqlCreateStrings());
-					}
-					catch (Exception e2) {
+					} catch (Exception e2) {
 						throw new MappingException("Create Sequence table fail: ", e2);
 					}
 				}
 			}
-		}
-		catch (MetaDataAccessException e) {
+		} catch (MetaDataAccessException e) {
 			throw new MappingException("Init Sequence Table fail:", e);
 		}
 	}
@@ -168,16 +164,14 @@ public class TableGenerator implements IdentityGenerator<Serializable> {
 			AtomicLong seq = new AtomicLong(value);
 			generatedValue = seq.getAndAdd(incrementSize);
 			rows = template.update(buildUpdateQuery(), seq.get(), value, segment);
-		}
-		while (rows == 0);
+		} while (rows == 0);
 		return generatedValue;
 	}
 
 	private Long doQueryValue(String segment) {
 		try {
 			return template.queryForObject(buildSelectQuery(), new Object[] { segment }, Long.class);
-		}
-		catch (EmptyResultDataAccessException e) {
+		} catch (EmptyResultDataAccessException e) {
 			return null;
 		}
 	}
@@ -199,7 +193,7 @@ public class TableGenerator implements IdentityGenerator<Serializable> {
 
 	private String sqlCreateStrings() {
 		return "create table " + tableName + " ( " + segmentColumnName + ' '
-				+ dialect.getTypeName(Types.VARCHAR, segmentValueLength, 0, 0) + " not null " + ", " + valueColumnName
-				+ ' ' + dialect.getTypeName(Types.BIGINT) + ", primary key ( " + segmentColumnName + " ) )";
+				+ dialect.getTypeName(Types.VARCHAR, segmentValueLength, 0, 0) + " not null " + ", " + valueColumnName + ' '
+				+ dialect.getTypeName(Types.BIGINT) + ", primary key ( " + segmentColumnName + " ) )";
 	}
 }

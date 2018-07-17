@@ -30,15 +30,15 @@ import javax.persistence.GeneratedValue;
 import org.springframework.data.mapping.PersistentProperty;
 
 /**
- * A generator for use with ANSI-SQL IDENTITY columns used as the primary key.
- * The IdentityGenerator for autoincrement/identity key generation.
+ * A generator for use with ANSI-SQL IDENTITY columns used as the primary key. The IdentityGenerator for
+ * autoincrement/identity key generation.
  *
  * @author 7cat
  */
 public interface IdentityGenerator<ID extends Serializable> {
 
 	/**
-	 * @param persistentProperty Property annotated with {@link GeneratedValue}     
+	 * @param persistentProperty Property annotated with {@link GeneratedValue}
 	 * @return generated identity
 	 */
 	ID generate(PersistentProperty<?> persistentProperty);

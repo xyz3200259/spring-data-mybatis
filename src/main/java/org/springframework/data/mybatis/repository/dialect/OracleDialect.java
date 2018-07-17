@@ -58,8 +58,7 @@ public class OracleDialect extends Dialect {
 			final StringBuilder pagingSelect = new StringBuilder();
 			pagingSelect.append("select * from ( select row_.*, rownum rownum_ from ( ");
 			pagingSelect.append(sql);
-			pagingSelect.append(
-					" ) row_ where rownum <![CDATA[<=]]> #{offsetEnd}) where rownum_ <![CDATA[>]]> #{offset}");
+			pagingSelect.append(" ) row_ where rownum <![CDATA[<=]]> #{offsetEnd}) where rownum_ <![CDATA[>]]> #{offset}");
 			return pagingSelect.toString();
 		};
 	};

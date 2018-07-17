@@ -42,8 +42,7 @@ public final class QueryUtils {
 			String sqlPart = sql.toString().substring(index);
 			countSql.append(" SELECT COUNT(*) FROM ( " + sqlPart + " )");
 			return countSql.toString();
-		}
-		else {
+		} else {
 			return "SELECT COUNT(*) FROM ( " + sql + " )";
 		}
 	}

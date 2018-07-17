@@ -33,38 +33,35 @@ import java.util.List;
  */
 public class MybatisParameters extends Parameters<MybatisParameters, MybatisParameter> {
 
-    public MybatisParameters(Method method) {
-        super(method);
-    }
+	public MybatisParameters(Method method) {
+		super(method);
+	}
 
-    protected MybatisParameters(List<MybatisParameter> parameters) {
-        super(parameters);
-    }
+	protected MybatisParameters(List<MybatisParameter> parameters) {
+		super(parameters);
+	}
 
-    @Override
-    protected MybatisParameter createParameter(MethodParameter parameter) {
-        return new MybatisParameter(parameter);
-    }
+	@Override
+	protected MybatisParameter createParameter(MethodParameter parameter) {
+		return new MybatisParameter(parameter);
+	}
 
-    @Override
-    protected MybatisParameters createFrom(List<MybatisParameter> parameters) {
-        return new MybatisParameters(parameters);
-    }
+	@Override
+	protected MybatisParameters createFrom(List<MybatisParameter> parameters) {
+		return new MybatisParameters(parameters);
+	}
 
-    public static class MybatisParameter extends Parameter {
+	public static class MybatisParameter extends Parameter {
 
+		/**
+		 * Creates a new {@link Parameter} for the given {@link MethodParameter}.
+		 *
+		 * @param parameter must not be {@literal null}.
+		 */
+		protected MybatisParameter(MethodParameter parameter) {
+			super(parameter);
 
-        /**
-         * Creates a new {@link Parameter} for the given {@link MethodParameter}.
-         *
-         * @param parameter must not be {@literal null}.
-         */
-        protected MybatisParameter(MethodParameter parameter) {
-            super(parameter);
+		}
 
-
-        }
-
-
-    }
+	}
 }

@@ -64,12 +64,13 @@ public class DB2Dialect extends Dialect {
 				String cetPart = sql.substring(0, index);
 				pagingSelect.append(cetPart);
 				String sqlPart = sql.toString().substring(index);
-				pagingSelect.append("select * from ( select inner2_.*, rownumber() over(order by order of inner2_) as rownumber_ from ( ");
+				pagingSelect.append(
+						"select * from ( select inner2_.*, rownumber() over(order by order of inner2_) as rownumber_ from ( ");
 				pagingSelect.append(sqlPart);
 				pagingSelect.append(" ) as inner2_ )  where rownumber_ <= " + offsetEnd + "   and rownumber_ > " + offset);
-			}
-			else {
-				pagingSelect.append("select * from ( select inner2_.*, rownumber() over(order by order of inner2_) as rownumber_ from ( ");
+			} else {
+				pagingSelect.append(
+						"select * from ( select inner2_.*, rownumber() over(order by order of inner2_) as rownumber_ from ( ");
 				pagingSelect.append(sql);
 				pagingSelect.append(" ) as inner2_ )  where rownumber_ <= " + offsetEnd + "   and rownumber_ > " + offset);
 			}
