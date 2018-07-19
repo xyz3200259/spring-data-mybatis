@@ -40,8 +40,6 @@ public class TableGeneratorConfig {
 
 	private String valueColumnName;
 
-	private String pkColumnValue;
-
 	private Integer initialValue;
 
 	private Integer allocationSize;
@@ -84,14 +82,6 @@ public class TableGeneratorConfig {
 
 	public void setValueColumnName(String valueColumnName) {
 		this.valueColumnName = valueColumnName;
-	}
-
-	public String getPkColumnValue() {
-		return pkColumnValue;
-	}
-
-	public void setPkColumnValue(String pkColumnValue) {
-		this.pkColumnValue = pkColumnValue;
 	}
 
 	public Integer getInitialValue() {

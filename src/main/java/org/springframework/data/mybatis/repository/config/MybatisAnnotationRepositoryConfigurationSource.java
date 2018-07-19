@@ -60,7 +60,6 @@ public class MybatisAnnotationRepositoryConfigurationSource extends AnnotationRe
 		config.setCatalog((String) defaultTableGenerator.get("catalog"));
 		config.setInitialValue((int) defaultTableGenerator.get("initialValue"));
 		config.setPkColumnName((String) defaultTableGenerator.get("pkColumnName"));
-		config.setPkColumnValue((String) defaultTableGenerator.get("pkColumnValue"));
 		config.setSchema((String) defaultTableGenerator.get("schema"));
 		config.setTable((String) defaultTableGenerator.get("table"));
 		config.setValueColumnName((String) defaultTableGenerator.get("valueColumnName"));
