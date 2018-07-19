@@ -31,6 +31,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.persistence.TableGenerator;
 
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
@@ -46,7 +47,8 @@ import org.springframework.data.annotation.LastModifiedDate;
 public class User {
 
 	@Id
-	@GeneratedValue(generator = "uuid")
+	@GeneratedValue(generator = "sequenceTable")
+	@TableGenerator(name="sequenceTable", allocationSize=2)
 	private String id;
 
 	@Column(name = "FIRST_NAME")

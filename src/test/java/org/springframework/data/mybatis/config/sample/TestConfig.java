@@ -27,6 +27,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.mybatis.repository.config.EnableMybatisRepositories;
+import org.springframework.data.mybatis.repository.config.EnableMybatisRepositories.TableGeneratorConfig;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
@@ -39,7 +40,9 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Configuration
 @EnableMybatisRepositories(
         value = "org.springframework.data.mybatis.repository.sample",
-        mapperLocations = "classpath*:/org/springframework/data/mybatis/repository/sample/mappers/*Mapper.xml"
+        mapperLocations = "classpath*:/org/springframework/data/mybatis/repository/sample/mappers/*Mapper.xml",
+        defaultTableGenerator=@TableGeneratorConfig
+        
 )
 @EnableTransactionManagement
 public class TestConfig  {

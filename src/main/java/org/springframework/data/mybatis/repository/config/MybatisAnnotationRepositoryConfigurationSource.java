@@ -19,11 +19,13 @@
 package org.springframework.data.mybatis.repository.config;
 
 import java.lang.annotation.Annotation;
+
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.type.AnnotationMetadata;
+import org.springframework.data.mybatis.id.support.TableGeneratorConfig;
 import org.springframework.data.repository.config.AnnotationRepositoryConfigurationSource;
 
 /**
@@ -32,8 +34,8 @@ import org.springframework.data.repository.config.AnnotationRepositoryConfigurat
 public class MybatisAnnotationRepositoryConfigurationSource extends AnnotationRepositoryConfigurationSource {
 
 	/**
-	 * Creates a new {@link AnnotationRepositoryConfigurationSource} from the given {@link
-	 * AnnotationMetadata} and annotation.
+	 * Creates a new {@link AnnotationRepositoryConfigurationSource} from the given {@link AnnotationMetadata} and
+	 * annotation.
 	 *
 	 * @param metadata must not be {@literal null}.
 	 * @param annotation must not be {@literal null}.
@@ -50,4 +52,18 @@ public class MybatisAnnotationRepositoryConfigurationSource extends AnnotationRe
 		return attributes.getStringArray("mapperLocations");
 	}
 
+	public TableGeneratorConfig getDefaultTableGeneratorConfig() {
+		AnnotationAttributes attributes = getAttributes();
+		AnnotationAttributes defaultTableGenerator = (AnnotationAttributes) attributes.get("defaultTableGenerator");
+		TableGeneratorConfig config = new TableGeneratorConfig();
+		config.setAllocationSize((int) defaultTableGenerator.get("allocationSize"));
+		config.setCatalog((String) defaultTableGenerator.get("catalog"));
+		config.setInitialValue((int) defaultTableGenerator.get("initialValue"));
+		config.setPkColumnName((String) defaultTableGenerator.get("pkColumnName"));
+		config.setPkColumnValue((String) defaultTableGenerator.get("pkColumnValue"));
+		config.setSchema((String) defaultTableGenerator.get("schema"));
+		config.setTable((String) defaultTableGenerator.get("table"));
+		config.setValueColumnName((String) defaultTableGenerator.get("valueColumnName"));
+		return config;
+	}
 }

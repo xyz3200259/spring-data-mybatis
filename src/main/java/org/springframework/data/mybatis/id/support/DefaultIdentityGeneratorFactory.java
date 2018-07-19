@@ -30,6 +30,7 @@ import java.util.Map;
 import javax.persistence.GenerationType;
 
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mybatis.id.CustomIdentityGeneratorFactory;
@@ -42,7 +43,8 @@ import org.springframework.util.StringUtils;
  * @author 7cat
  * @since 1.0
  */
-public class DefaultIdentityGeneratorFactory<ID extends Serializable, T> implements IdentityGeneratorFactory<ID, T> {
+public class DefaultIdentityGeneratorFactory<ID extends Serializable, T>
+		implements IdentityGeneratorFactory<ID, T>, InitializingBean {
 
 	public static final String DEFAULT_STRING_TYPE_ID_GENERATOR = "uuid";
 
@@ -50,12 +52,16 @@ public class DefaultIdentityGeneratorFactory<ID extends Serializable, T> impleme
 
 	private Map<String, IdentityGenerator<? extends Serializable>> autoGenerationTypeGeneratorMapping = new HashMap<>();
 
-	public DefaultIdentityGeneratorFactory(SqlSessionFactory sqlSessionFactory, Dialect dialect) {
-		IdentityGenerator<? extends Serializable> uuidGenerator = new UUIDGenerator();
-		autoGenerationTypeGeneratorMapping.put(DEFAULT_STRING_TYPE_ID_GENERATOR, uuidGenerator);
-		IdentityGenerator<? extends Serializable> sequenceTableGenerator = new TableGenerator(
-				sqlSessionFactory.getConfiguration().getEnvironment().getDataSource(), dialect);
-		autoGenerationTypeGeneratorMapping.put(DEFAULT_NUMERICAL_TYPE_GENERATOR, sequenceTableGenerator);
+	private SqlSessionFactory sqlSessionFactory;
+
+	private Dialect dialect;
+	
+	private TableGeneratorConfig tableGeneratorConfig;
+
+	public DefaultIdentityGeneratorFactory(SqlSessionFactory sqlSessionFactory, Dialect dialect,TableGeneratorConfig tableGeneratorConfig) {
+		this.sqlSessionFactory = sqlSessionFactory;
+		this.dialect = dialect;
+		this.tableGeneratorConfig= tableGeneratorConfig;
 	}
 
 	@Autowired(required = false)
@@ -71,6 +77,15 @@ public class DefaultIdentityGeneratorFactory<ID extends Serializable, T> impleme
 		if (identityGenerator != null) {
 			return identityGenerator;
 		}
+
+		if (type == GenerationType.IDENTITY) {
+			return (IdentityGenerator<ID>) autoGenerationTypeGeneratorMapping.get(DEFAULT_STRING_TYPE_ID_GENERATOR);
+		}
+
+		if (type == GenerationType.TABLE) {
+			return (IdentityGenerator<ID>) autoGenerationTypeGeneratorMapping.get(DEFAULT_NUMERICAL_TYPE_GENERATOR);
+		}
+
 		if (type == GenerationType.AUTO) {
 			if (StringUtils.isEmpty(generator)) {
 				if (pp.getActualType().equals(String.class)) {
@@ -86,5 +101,15 @@ public class DefaultIdentityGeneratorFactory<ID extends Serializable, T> impleme
 
 	public void setCustomIdentityGeneratorFactory(CustomIdentityGeneratorFactory<ID, T> customIdentityGeneratorFactory) {
 		this.customIdentityGeneratorFactory = customIdentityGeneratorFactory;
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		IdentityGenerator<? extends Serializable> uuidGenerator = new UUIDGenerator();
+		autoGenerationTypeGeneratorMapping.put(DEFAULT_STRING_TYPE_ID_GENERATOR, uuidGenerator);
+		TableGenerator sequenceTableGenerator = new TableGenerator(
+				sqlSessionFactory.getConfiguration().getEnvironment().getDataSource(), dialect,tableGeneratorConfig);
+		sequenceTableGenerator.afterPropertiesSet();
+		autoGenerationTypeGeneratorMapping.put(DEFAULT_NUMERICAL_TYPE_GENERATOR, sequenceTableGenerator);
 	}
 }

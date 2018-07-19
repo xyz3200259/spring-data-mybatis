@@ -27,19 +27,22 @@ import java.io.Serializable;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.Types;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mybatis.id.IdentityGenerator;
 import org.springframework.data.mybatis.repository.dialect.Dialect;
 import org.springframework.data.mybatis.utils.StringUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DelegatingDataSource;
 import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.jdbc.support.MetaDataAccessException;
 
@@ -49,56 +52,28 @@ import org.springframework.jdbc.support.MetaDataAccessException;
  * @author 7cat
  * @since 1.0
  */
-public class TableGenerator implements IdentityGenerator<Serializable> {
+public class TableGenerator implements IdentityGenerator<Serializable>, InitializingBean {
 
 	private Log logger = LogFactory.getLog(TableGenerator.class);
 
-	/**
-	 * The default {@link #TABLE_PARAM} value
-	 */
-	public static final String DEF_TABLE = "mybatis_sequences";
-
-	/**
-	 * The default {@link #VALUE_COLUMN_PARAM} value
-	 */
-	public static final String DEF_VALUE_COLUMN = "next_val";
-
-	/**
-	 * The default {@link #SEGMENT_COLUMN_PARAM} value
-	 */
-	public static final String DEF_SEGMENT_COLUMN = "sequence_name";
+	private ConcurrentHashMap<String, GenerationState> generationStateMapping = new ConcurrentHashMap<>();
 
 	/**
 	 * The default {@link #SEGMENT_LENGTH_PARAM} value
 	 */
 	public static final int DEF_SEGMENT_LENGTH = 255;
+	
+	private String tableName;
 
-	/**
-	 * The default {@link #INITIAL_PARAM} value
-	 */
-	public static final int DEFAULT_INITIAL_VALUE = 1;
-
-	/**
-	 * Indicates the increment size to use. The default value is {@link #DEFAULT_INCREMENT_SIZE}
-	 */
-	public static final String INCREMENT_PARAM = "increment_size";
-
-	/**
-	 * The default {@link #INCREMENT_PARAM} value
-	 */
-	public static final int DEFAULT_INCREMENT_SIZE = 1;
-
-	private String tableName = DEF_TABLE;
-
-	private String segmentColumnName = DEF_SEGMENT_COLUMN;
+	private String segmentColumnName;
 
 	private int segmentValueLength = DEF_SEGMENT_LENGTH;
 
-	private String valueColumnName = DEF_VALUE_COLUMN;
+	private String valueColumnName;
 
-	private int initialValue = DEFAULT_INITIAL_VALUE;
+	private int initialValue;
 
-	private int incrementSize = DEFAULT_INCREMENT_SIZE;
+	private int incrementSize;
 
 	private DataSource dataSource;
 
@@ -106,15 +81,161 @@ public class TableGenerator implements IdentityGenerator<Serializable> {
 
 	private JdbcTemplate template;
 
-	public TableGenerator(DataSource dataSource, Dialect dialect) {
+	public TableGenerator(DataSource dataSource, Dialect dialect, TableGeneratorConfig tableGeneratorConfig) {
 		this.dataSource = dataSource;
 		this.dialect = dialect;
+		DelegatingDataSource ds = new DelegatingDataSource();
+		ds.setTargetDataSource(dataSource);
 		// 避免受到事务传播性影响
-		this.template = new JdbcTemplate(dataSource);
-		initTable();
+		this.template = new JdbcTemplate(ds);
+		if (null != tableGeneratorConfig) {
+			if (!org.springframework.util.StringUtils.isEmpty(tableGeneratorConfig.getTable())) {
+				if (!org.springframework.util.StringUtils.isEmpty(tableGeneratorConfig.getSchema())) {
+					this.tableName = StringUtils.qualify(tableGeneratorConfig.getSchema(), tableGeneratorConfig.getTable());
+				} else if (!org.springframework.util.StringUtils.isEmpty(tableGeneratorConfig.getCatalog())) {
+					this.tableName = StringUtils.qualify(tableGeneratorConfig.getSchema(), tableGeneratorConfig.getCatalog());
+				} else {
+					this.tableName = tableGeneratorConfig.getTable();
+				}
+			}
+
+			if (!org.springframework.util.StringUtils.isEmpty(tableGeneratorConfig.getPkColumnName())) {
+				segmentColumnName = tableGeneratorConfig.getPkColumnName();
+			}
+
+			if (!org.springframework.util.StringUtils.isEmpty(tableGeneratorConfig.getValueColumnName())) {
+				valueColumnName = tableGeneratorConfig.getValueColumnName();
+			}
+			if (tableGeneratorConfig.getInitialValue() > 0) {
+				this.initialValue = tableGeneratorConfig.getInitialValue();
+			}
+			this.incrementSize = tableGeneratorConfig.getAllocationSize();
+		}
 	}
 
-	private void initTable() {
+	@Override
+	public Serializable generate(PersistentProperty<?> persistentProperty) {
+		javax.persistence.TableGenerator tableGeneratorConfig = persistentProperty
+				.findAnnotation(javax.persistence.TableGenerator.class);
+
+		String segment = StringUtils.qualify(persistentProperty.getOwner().getName(), persistentProperty.getName());
+
+		String tableName = this.tableName;
+
+		String segmentColumnName = this.segmentColumnName;
+
+		String valueColumnName = this.valueColumnName;
+
+		int initialValue = this.initialValue;
+
+		int incrementSize = this.incrementSize;
+
+		if (null != tableGeneratorConfig) {
+			if (!org.springframework.util.StringUtils.isEmpty(tableGeneratorConfig.pkColumnValue())) {
+				segment = tableGeneratorConfig.pkColumnValue();
+			}
+			if (!org.springframework.util.StringUtils.isEmpty(tableGeneratorConfig.table())) {
+				if (!org.springframework.util.StringUtils.isEmpty(tableGeneratorConfig.schema())) {
+					tableName = StringUtils.qualify(tableGeneratorConfig.schema(), tableGeneratorConfig.table());
+				} else if (!org.springframework.util.StringUtils.isEmpty(tableGeneratorConfig.catalog())) {
+					tableName = StringUtils.qualify(tableGeneratorConfig.schema(), tableGeneratorConfig.catalog());
+				} else {
+					tableName = tableGeneratorConfig.table();
+				}
+			}
+
+			if (!org.springframework.util.StringUtils.isEmpty(tableGeneratorConfig.pkColumnName())) {
+				segmentColumnName = tableGeneratorConfig.pkColumnName();
+			}
+
+			if (!org.springframework.util.StringUtils.isEmpty(tableGeneratorConfig.valueColumnName())) {
+				valueColumnName = tableGeneratorConfig.valueColumnName();
+			}
+			if (tableGeneratorConfig.initialValue() > 0) {
+				initialValue = tableGeneratorConfig.initialValue();
+			}
+			incrementSize = tableGeneratorConfig.allocationSize();
+		}
+
+		// 如果不存在 GenerateState 则创建一个
+		if (!generationStateMapping.containsKey(segment)) {
+			generationStateMapping.putIfAbsent(segment, new GenerationState());
+		}
+
+		GenerationState state = generationStateMapping.get(segment);
+
+		synchronized (state) {
+			if (state.value.get() < state.upperLimitValue.get()) {
+				return state.value.getAndIncrement();
+			} else {
+				int rows = 0;
+				do {
+					Long value = doQueryValue(tableName, valueColumnName, segmentColumnName, segment);
+					if (null == value) {
+						try {
+							template.update(buildInsertQuery(tableName, valueColumnName, segmentColumnName), segment, initialValue);
+							value = new Long(initialValue);
+						} catch (DuplicateKeyException e) {
+							// ignore
+						}
+					}
+
+					rows = template.update(buildUpdateQuery(tableName, valueColumnName, segmentColumnName), value + incrementSize,
+							value, segment);
+
+					if (rows > 0) {
+						state.value = new AtomicLong(value);
+						state.upperLimitValue = new AtomicLong(value + incrementSize);
+						return state.value.getAndIncrement();
+					} else {
+						continue;
+					}
+				} while (rows == 0);
+			}
+			throw new IdentityGenerationException("Generate identity fail.");
+		}
+
+	}
+
+	private Long doQueryValue(String tableName, String valueColumnName, String segmentColumnName, String segment) {
+		try {
+			return template.queryForObject(buildSelectQuery(tableName, valueColumnName, segmentColumnName),
+					new Object[] { segment }, Long.class);
+		} catch (EmptyResultDataAccessException e) {
+			return null;
+		}
+	}
+
+	private String buildSelectQuery(String tableName, String valueColumnName, String segmentColumnName) {
+		final String alias = "tbl";
+		return "select " + StringUtils.qualify(alias, valueColumnName) + " from " + tableName + ' ' + alias + " where "
+				+ StringUtils.qualify(alias, segmentColumnName) + "=?";
+	}
+
+	private String buildUpdateQuery(String tableName, String valueColumnName, String segmentColumnName) {
+		return "update " + tableName + " set " + valueColumnName + "=? " + " where " + valueColumnName + "=? and "
+				+ segmentColumnName + "=?";
+	}
+
+	private String buildInsertQuery(String tableName, String valueColumnName, String segmentColumnName) {
+		return "insert into " + tableName + " (" + segmentColumnName + ", " + valueColumnName + ") " + " values (?,?)";
+	}
+
+	private String sqlCreateStrings() {
+		return "create table " + tableName + " ( " + segmentColumnName + ' '
+				+ dialect.getTypeName(Types.VARCHAR, segmentValueLength, 0, 0) + " not null " + ", " + valueColumnName + ' '
+				+ dialect.getTypeName(Types.BIGINT) + ", primary key ( " + segmentColumnName + " ) )";
+	}
+
+	private static class GenerationState {
+		// the current generator value
+		private AtomicLong value = new AtomicLong();
+		// the value at which we'll hit the db again
+		private AtomicLong upperLimitValue = new AtomicLong();
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
 		try {
 			boolean result = (boolean) JdbcUtils.extractDatabaseMetaData(dataSource, (DatabaseMetaData action) -> {
 				ResultSet rs = null;
@@ -135,65 +256,37 @@ public class TableGenerator implements IdentityGenerator<Serializable> {
 					// 尝试直接执行查询
 					template.execute("select count(*) from " + tableName);
 				} catch (Exception e1) {
-					logger.debug("Init Sequence table " + DEF_TABLE + " .");
+					logger.debug("Init Sequence table " + tableName + " .");
 					try {
 						// 尝试新建表
 						template.execute(sqlCreateStrings());
 					} catch (Exception e2) {
-						throw new MappingException("Create Sequence table fail: ", e2);
+						throw new IdentityGenerationException("Create Sequence table fail: ", e2);
 					}
 				}
 			}
 		} catch (MetaDataAccessException e) {
-			throw new MappingException("Init Sequence Table fail:", e);
+			throw new IdentityGenerationException("Init Sequence Table fail:", e);
 		}
 	}
 
-	@Override
-	public Serializable generate(PersistentProperty<?> persistentProperty) {
-
-		int rows = 0;
-		Long generatedValue = null;
-		do {
-			String segment = StringUtils.qualify(persistentProperty.getOwner().getName(), persistentProperty.getName());
-			Long value = doQueryValue(segment);
-			if (null == value) {
-				template.update(buildInsertQuery(), segment, initialValue);
-				value = new Long(initialValue);
-			}
-			AtomicLong seq = new AtomicLong(value);
-			generatedValue = seq.getAndAdd(incrementSize);
-			rows = template.update(buildUpdateQuery(), seq.get(), value, segment);
-		} while (rows == 0);
-		return generatedValue;
+	public void setTableName(String tableName) {
+		this.tableName = tableName;
 	}
 
-	private Long doQueryValue(String segment) {
-		try {
-			return template.queryForObject(buildSelectQuery(), new Object[] { segment }, Long.class);
-		} catch (EmptyResultDataAccessException e) {
-			return null;
-		}
+	public void setSegmentColumnName(String segmentColumnName) {
+		this.segmentColumnName = segmentColumnName;
 	}
 
-	private String buildSelectQuery() {
-		final String alias = "tbl";
-		return "select " + StringUtils.qualify(alias, valueColumnName) + " from " + tableName + ' ' + alias + " where "
-				+ StringUtils.qualify(alias, segmentColumnName) + "=?";
+	public void setValueColumnName(String valueColumnName) {
+		this.valueColumnName = valueColumnName;
 	}
 
-	private String buildUpdateQuery() {
-		return "update " + tableName + " set " + valueColumnName + "=? " + " where " + valueColumnName + "=? and "
-				+ segmentColumnName + "=?";
+	public void setInitialValue(int initialValue) {
+		this.initialValue = initialValue;
 	}
 
-	private String buildInsertQuery() {
-		return "insert into " + tableName + " (" + segmentColumnName + ", " + valueColumnName + ") " + " values (?,?)";
-	}
-
-	private String sqlCreateStrings() {
-		return "create table " + tableName + " ( " + segmentColumnName + ' '
-				+ dialect.getTypeName(Types.VARCHAR, segmentValueLength, 0, 0) + " not null " + ", " + valueColumnName + ' '
-				+ dialect.getTypeName(Types.BIGINT) + ", primary key ( " + segmentColumnName + " ) )";
+	public void setIncrementSize(int incrementSize) {
+		this.incrementSize = incrementSize;
 	}
 }

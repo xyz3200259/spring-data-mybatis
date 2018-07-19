@@ -21,20 +21,13 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.springframework.data.mybatis.id.support;
-
-import javax.sql.DataSource;
+package org.springframework.data.mybatis.repository.sample;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mapping.PersistentEntity;
-import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mybatis.config.sample.TestConfig;
-import org.springframework.data.mybatis.domain.sample.User;
-import org.springframework.data.mybatis.repository.dialect.Dialect;
+import org.springframework.data.mybatis.domain.sample.STUser;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,43 +35,22 @@ import org.springframework.transaction.annotation.Transactional;
 import static org.junit.Assert.*;
 
 /**
- * 
+ * Test case for testing 
  * @author 7cat
  * @since 1.0
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = TestConfig.class)
 @Transactional
-public class TableGeneratorTest<P extends PersistentProperty<P>> {
+public class STUserRepositoryTest {
 
 	@Autowired
-	private DataSource dataSource;
-
-	@Autowired
-	private Dialect dialect;
-
+	private STUserRepository repository;
+	
 	@Test
-	public void testGenerate() throws Exception {
-
-		TableGeneratorConfig config = new TableGeneratorConfig();
-		config.setAllocationSize(20);
-		config.setInitialValue(1);
-		config.setTable("SEQUENCES");
-		config.setPkColumnName("id");
-		config.setValueColumnName("value");
-
-		TableGenerator generator = new TableGenerator(dataSource, dialect, config);
-		generator.afterPropertiesSet();
-		PersistentProperty<?> pp = Mockito.mock(PersistentProperty.class);
-		Mockito.when(pp.getOwner()).thenAnswer((InvocationOnMock mock) -> {
-			PersistentEntity<?, ?> pe = Mockito.mock(PersistentEntity.class);
-			Mockito.when(pe.getName()).thenAnswer((InvocationOnMock iom) -> User.class.getName());
-			return pe;
-		});
-		Mockito.when(pp.getName()).thenReturn("id");
-		assertEquals(new Long(1), generator.generate(pp));
-		assertEquals(new Long(2), generator.generate(pp));
-		assertEquals(new Long(3), generator.generate(pp));
-		assertEquals(new Long(4), generator.generate(pp));
+	public void testSave() {
+		STUser stUser = new STUser();
+		repository.save(stUser);
+		assertEquals("10", stUser.getId());
 	}
 }

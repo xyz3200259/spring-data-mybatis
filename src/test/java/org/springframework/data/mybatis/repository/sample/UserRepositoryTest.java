@@ -62,6 +62,8 @@ public class UserRepositoryTest {
 		repository.save(user);
 		assertNotNull(user.getUpdatedAt());
 		assertNotNull(user.getUpdator());
+		
+		repository.save(new User());
 	}
 	
 	

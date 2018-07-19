@@ -37,6 +37,7 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.mybatis.id.support.DefaultIdentityGeneratorFactory;
+import org.springframework.data.mybatis.id.support.TableGeneratorConfig;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.repository.dialect.DialectFactoryBean;
 import org.springframework.data.mybatis.repository.support.MybatisRepository;
@@ -165,6 +166,8 @@ public class MybatisRepositoryConfigExtension extends RepositoryConfigurationExt
 		BeanDefinitionBuilder identityGeneratorFactorybuilder = BeanDefinitionBuilder.rootBeanDefinition(DefaultIdentityGeneratorFactory.class);
 		identityGeneratorFactorybuilder.addConstructorArgReference(sqlSessionFactoryRef);
 		identityGeneratorFactorybuilder.addConstructorArgReference(sqlSessionFactoryRef.concat(DIALECT_BEAN_NAME_SUFFIX));
+    TableGeneratorConfig tableGeneratorConfig  = ((MybatisAnnotationRepositoryConfigurationSource) config).getDefaultTableGeneratorConfig();
+    identityGeneratorFactorybuilder.addConstructorArgValue(tableGeneratorConfig);
 		registerIfNotAlreadyRegistered(identityGeneratorFactorybuilder.getBeanDefinition(), registry,
 				sqlSessionFactoryRef.concat(IDENTITY_GENERATOR_FACTORY_BEAN_NAME_SUFFIX), source);
 
