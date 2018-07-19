@@ -41,7 +41,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableMybatisRepositories(
         value = "org.springframework.data.mybatis.repository.sample",
         mapperLocations = "classpath*:/org/springframework/data/mybatis/repository/sample/mappers/*Mapper.xml",
-        defaultTableGenerator=@TableGeneratorConfig
+        tableGeneratorConfig=@TableGeneratorConfig
         
 )
 @EnableTransactionManagement

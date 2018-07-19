@@ -166,7 +166,7 @@ public class MybatisRepositoryConfigExtension extends RepositoryConfigurationExt
 		BeanDefinitionBuilder identityGeneratorFactorybuilder = BeanDefinitionBuilder.rootBeanDefinition(DefaultIdentityGeneratorFactory.class);
 		identityGeneratorFactorybuilder.addConstructorArgReference(sqlSessionFactoryRef);
 		identityGeneratorFactorybuilder.addConstructorArgReference(sqlSessionFactoryRef.concat(DIALECT_BEAN_NAME_SUFFIX));
-    TableGeneratorConfig tableGeneratorConfig  = ((MybatisAnnotationRepositoryConfigurationSource) config).getDefaultTableGeneratorConfig();
+    TableGeneratorConfig tableGeneratorConfig  = ((MybatisAnnotationRepositoryConfigurationSource) config).getTableGeneratorConfig();
     identityGeneratorFactorybuilder.addConstructorArgValue(tableGeneratorConfig);
 		registerIfNotAlreadyRegistered(identityGeneratorFactorybuilder.getBeanDefinition(), registry,
 				sqlSessionFactoryRef.concat(IDENTITY_GENERATOR_FACTORY_BEAN_NAME_SUFFIX), source);

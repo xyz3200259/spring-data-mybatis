@@ -52,9 +52,9 @@ public class MybatisAnnotationRepositoryConfigurationSource extends AnnotationRe
 		return attributes.getStringArray("mapperLocations");
 	}
 
-	public TableGeneratorConfig getDefaultTableGeneratorConfig() {
+	public TableGeneratorConfig getTableGeneratorConfig() {
 		AnnotationAttributes attributes = getAttributes();
-		AnnotationAttributes defaultTableGenerator = (AnnotationAttributes) attributes.get("defaultTableGenerator");
+		AnnotationAttributes defaultTableGenerator = (AnnotationAttributes) attributes.get("tableGeneratorConfig");
 		TableGeneratorConfig config = new TableGeneratorConfig();
 		config.setAllocationSize((int) defaultTableGenerator.get("allocationSize"));
 		config.setCatalog((String) defaultTableGenerator.get("catalog"));

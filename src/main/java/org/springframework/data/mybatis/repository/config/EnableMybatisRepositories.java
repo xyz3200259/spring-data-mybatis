@@ -155,7 +155,7 @@ public @interface EnableMybatisRepositories {
 	/**
 	 * Configures build-in table generator.
 	 */
-	TableGeneratorConfig defaultTableGenerator() default @TableGeneratorConfig;
+	TableGeneratorConfig tableGeneratorConfig() default @TableGeneratorConfig;
 
 	public static @interface TableGeneratorConfig {
 
