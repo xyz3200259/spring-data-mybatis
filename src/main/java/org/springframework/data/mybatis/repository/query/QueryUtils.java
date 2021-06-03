@@ -40,10 +40,10 @@ public final class QueryUtils {
 			StringBuilder countSql = new StringBuilder();
 			countSql.append(cetPart);
 			String sqlPart = sql.toString().substring(index);
-			countSql.append(" SELECT COUNT(*) FROM ( " + sqlPart + " )");
+			countSql.append(" SELECT COUNT(*) FROM ( " + sqlPart + " ) as total");
 			return countSql.toString();
 		} else {
-			return "SELECT COUNT(*) FROM ( " + sql + " )";
+			return "SELECT COUNT(*) FROM ( " + sql + " ) as total";
 		}
 	}
 
